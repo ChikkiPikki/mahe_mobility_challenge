@@ -44,7 +44,7 @@
         <scene>scene</scene>
         <ambient_light>0.4 0.4 0.4</ambient_light>
         <background_color>0.8 0.8 0.8</background_color>
-        <camera_pose>7.036968851021879 -29.946428470875343 10 0 0.6 1.57</camera_pose>
+        <camera_pose>11.032837900498748 -35.594403688761204 10 0 0.6 1.57</camera_pose>
       </plugin>
       <plugin filename="EntityContextMenuPlugin" name="Entity context menu">
         <gz-gui>
@@ -228,7 +228,7 @@
       </plugin>
       <plugin filename="toggle_charging" name="toggle_charging" />
       <plugin name="toggle_floors" filename="toggle_floors">
-        <floor name="ground" model_name="multi_floor_college_ground">
+        <floor name="floor_0" model_name="multi_floor_college_floor_0">
           <model name="OpenRobotics/Bookshelf" />
           <model name="OpenRobotics/Sofa" />
           <model name="OpenRobotics/Sofa_2" />
@@ -246,7 +246,7 @@
           <model name="OpenRobotics/Chair_3" />
           <model name="OpenRobotics/WoodenChair" />
           <model name="OpenRobotics/WoodenChair_2" />
-          <model name="OpenRobotics/MopCart1_Dynamic_Obstacle" />
+          <model name="dynamic_obstacle_1" />
           <model name="OpenRobotics/OfficeChairGrey" />
           <model name="OpenRobotics/OfficeChairGrey_2" />
           <model name="OpenRobotics/StorageRack" />
@@ -270,148 +270,148 @@
     <include>
       <name>OpenRobotics/Bookshelf</name>
       <uri>model://Bookshelf</uri>
-      <pose>7.759224277260629 -5.1059441830854455 0.0 0 0 1.5708</pose>
+      <pose>12.165218504868001 -8.005301102447792 0.0 0 0 1.5708</pose>
       <static>True</static>
     </include>
     <include>
       <name>OpenRobotics/Sofa</name>
       <uri>model://Sofa</uri>
-      <pose>1.9408677506332856 -13.937506157419323 0.0 0 0 1.5708</pose>
+      <pose>3.042969172150467 -21.85177303288485 0.0 0 0 1.5708</pose>
       <static>True</static>
     </include>
     <include>
       <name>OpenRobotics/Sofa_2</name>
       <uri>model://Sofa</uri>
-      <pose>1.9239248115025718 -18.381444779545323 0.0 0 0 1.5708</pose>
+      <pose>3.0164053625124523 -28.819155651121406 0.0 0 0 1.5708</pose>
       <static>True</static>
     </include>
     <include>
       <name>OpenRobotics/Sofa_3</name>
       <uri>model://Sofa</uri>
-      <pose>10.897343236243785 -5.040414486489071 0.0 0 0 1.5708</pose>
+      <pose>17.085285442767738 -7.902561054065787 0.0 0 0 1.5708</pose>
       <static>True</static>
     </include>
     <include>
       <name>OpenRobotics/Cafe table</name>
       <uri>model://Cafe table</uri>
-      <pose>11.244985618334757 -11.493915816917413 0.0 0 0 1.5708</pose>
+      <pose>17.630332909958952 -18.020615514251364 0.0 0 0 1.5708</pose>
       <static>True</static>
     </include>
     <include>
       <name>OpenRobotics/Cafe table_2</name>
       <uri>model://Cafe table</uri>
-      <pose>4.825431712910925 -13.350068871897127 0.0 0 0 1.5708</pose>
+      <pose>7.565502564465838 -20.930765638211756 0.0 0 0 1.5708</pose>
       <static>True</static>
     </include>
     <include>
       <name>OpenRobotics/FemaleVisitor</name>
       <uri>model://FemaleVisitor</uri>
-      <pose>1.5819623145586894 -13.273302498492734 0.0 0 0 1.5708</pose>
+      <pose>2.4802630437520414 -20.81040828380101 0.0 0 0 1.5708</pose>
       <static>True</static>
     </include>
     <include>
       <name>OpenRobotics/TrashBin</name>
       <uri>model://TrashBin</uri>
-      <pose>2.772689568142089 -14.171964078986328 0.0 0 0 1.5708</pose>
+      <pose>4.34713229535943 -22.219365429256047 0.0 0 0 1.5708</pose>
       <static>True</static>
     </include>
     <include>
       <name>OpenRobotics/VendingMachine</name>
       <uri>model://VendingMachine</uri>
-      <pose>8.018608629775 -14.025931242441423 0.0 0 0 1.5708</pose>
+      <pose>12.571891544894507 -21.990409376179873 0.0 0 0 1.5708</pose>
       <static>True</static>
     </include>
     <include>
       <name>OpenRobotics/VendingMachine_2</name>
       <uri>model://VendingMachine</uri>
-      <pose>7.378311484339028 -18.47429243767731 0.0 0 0 1.5708</pose>
+      <pose>11.568008372565085 -28.964725879340108 0.0 0 0 1.5708</pose>
       <static>True</static>
     </include>
     <include>
       <name>OpenRobotics/VendingMachine_3</name>
       <uri>model://VendingMachine</uri>
-      <pose>10.606376612137549 -15.851891223744506 0.0 0 0 -1.5486</pose>
+      <pose>16.629096469051692 -24.85322160585021 0.0 0 0 -1.5486</pose>
       <static>True</static>
     </include>
     <include>
       <name>OpenRobotics/DigitalKiosk</name>
       <uri>model://DigitalKiosk</uri>
-      <pose>3.1445286126553365 -9.07823252820631 0.0 0 0 1.5708</pose>
+      <pose>4.930116246268244 -14.23321177444043 0.0 0 0 1.5708</pose>
       <static>True</static>
     </include>
     <include>
       <name>OpenRobotics/Chair</name>
       <uri>model://Chair</uri>
-      <pose>8.766814800613805 -11.538651506744642 0.0 0 0 1.5708</pose>
+      <pose>13.744958752349696 -18.090753896938555 0.0 0 0 1.5708</pose>
       <static>True</static>
     </include>
     <include>
       <name>OpenRobotics/Chair_2</name>
       <uri>model://Chair</uri>
-      <pose>8.386658153392899 -11.538651506744642 0.0 0 0 1.5708</pose>
+      <pose>13.148934135162955 -18.090753896938555 0.0 0 0 1.5708</pose>
       <static>True</static>
     </include>
     <include>
       <name>OpenRobotics/Chair_3</name>
       <uri>model://Chair</uri>
-      <pose>8.006510298563864 -11.529806360524871 0.0 0 0 1.5708</pose>
+      <pose>12.552923303035707 -18.076886127091203 0.0 0 0 1.5708</pose>
       <static>True</static>
     </include>
     <include>
       <name>OpenRobotics/WoodenChair</name>
       <uri>model://WoodenChair</uri>
-      <pose>8.544894829851364 -15.934152842066748 0.0 0 0 -3.1416</pose>
+      <pose>13.397023850811815 -24.98219462244246 0.0 0 0 -3.1416</pose>
       <static>True</static>
     </include>
     <include>
       <name>OpenRobotics/WoodenChair_2</name>
       <uri>model://WoodenChair</uri>
-      <pose>8.163656718430627 -16.59178858426752 0.0 0 0 2.0754</pose>
+      <pose>12.799303671307754 -26.01326193208696 0.0 0 0 2.0754</pose>
       <static>True</static>
     </include>
     <include>
-      <name>OpenRobotics/MopCart1_Dynamic_Obstacle</name>
+      <name>dynamic_obstacle_1</name>
       <uri>model://MopCart1</uri>
-      <pose>5.144718631225793 -16.529705505283623 0.0 0 0 1.5708</pose>
+      <pose>8.066093214800489 -25.915925627025196 0.0 0 0 1.5708</pose>
       <static>True</static>
     </include>
     <include>
       <name>OpenRobotics/OfficeChairGrey</name>
       <uri>model://OfficeChairGrey</uri>
-      <pose>3.0393188515561538 -4.521953515175727 0.0 0 0 1.5708</pose>
+      <pose>4.76516422440603 -7.08969745109494 0.0 0 0 1.5708</pose>
       <static>True</static>
     </include>
     <include>
       <name>OpenRobotics/OfficeChairGrey_2</name>
       <uri>model://OfficeChairGrey</uri>
-      <pose>6.027316511775527 -4.534561805115241 0.0 0 0 -1.5643</pose>
+      <pose>9.449865056566553 -7.109465226404184 0.0 0 0 -1.5643</pose>
       <static>True</static>
     </include>
     <include>
       <name>OpenRobotics/StorageRack</name>
       <uri>model://StorageRack</uri>
-      <pose>4.10147495884561 -8.795398866578491 0.0 0 0 1.5708</pose>
+      <pose>6.430454551085193 -13.78977398075301 0.0 0 0 1.5708</pose>
       <static>True</static>
     </include>
     <include>
       <name>OpenRobotics/StorageRack_2</name>
       <uri>model://StorageRack</uri>
-      <pose>4.121029238361285 -7.905573639912801 0.0 0 0 1.5708</pose>
+      <pose>6.461112523391859 -12.39467082008583 0.0 0 0 1.5708</pose>
       <static>True</static>
     </include>
     <include>
-      <name>multi_floor_college_ground</name>
-      <uri>model://multi_floor_college_ground</uri>
+      <name>multi_floor_college_floor_0</name>
+      <uri>model://multi_floor_college_floor_0</uri>
       <pose>0 0 0.0 0 0 0</pose>
     </include>
     <rmf_charger_waypoints name="charger_waypoints" />
   
-    <model name="aruco_1_v78">
+    <model name="aruco_1_v77">
       <static>true</static>
-      <pose>4.035988416185405 -9.174649058917394 0.25 0 0 0.7853981633974483</pose>
+      <pose>5.071178760033582 -8.260862320340452 0.2 0 0 0.7853981633974483</pose>
       <link name="link">
         <visual name="visual">
-          <geometry><box><size>0.5 0.5 0.5</size></box></geometry>
+          <geometry><box><size>0.4 0.4 0.4</size></box></geometry>
           <material>
             <ambient>0.9 0.6 0.1 1</ambient>
             <diffuse>0.9 0.6 0.1 1</diffuse>
@@ -423,74 +423,704 @@
           </material>
         </visual>
         <collision name="collision">
-          <geometry><box><size>0.5 0.5 0.5</size></box></geometry>
+          <geometry><box><size>0.4 0.4 0.4</size></box></geometry>
         </collision>
       </link>
     </model>
 
-    <model name="aruco_2_v79">
+    <model name="aruco_2_v78">
       <static>true</static>
-      <pose>5.062074269734199 -10.590307214420267 0.25 0 0 1.0471975511965976</pose>
+      <pose>5.044077333075441 -10.552656030739646 0.2 0 0 1.0471975511965976</pose>
       <link name="link">
         <visual name="visual">
-          <geometry><box><size>0.5 0.5 0.5</size></box></geometry>
+          <geometry><box><size>0.4 0.4 0.4</size></box></geometry>
           <material>
             <ambient>0.9 0.6 0.1 1</ambient>
             <diffuse>0.9 0.6 0.1 1</diffuse>
             <pbr>
               <metal>
-                <albedo_map>/home/nemilai/ros2_ws/src/mini_r1_v1_description/worlds/generated/aruco_2.png</albedo_map>
+                <albedo_map>/home/tanay/ros2_ws/src/mini_r1_v1_description/worlds/generated/aruco_2.png</albedo_map>
               </metal>
             </pbr>
           </material>
         </visual>
         <collision name="collision">
-          <geometry><box><size>0.5 0.5 0.5</size></box></geometry>
+          <geometry><box><size>0.4 0.4 0.4</size></box></geometry>
         </collision>
       </link>
     </model>
 
-    <model name="aruco_3_v80">
+    <model name="aruco_3_v79">
       <static>true</static>
-      <pose>17.17816021932902 -21.53745491025401 0.25 0 0 0.0</pose>
+      <pose>17.117087575012107 -21.46088388597486 0.2 0 0 0.0</pose>
       <link name="link">
         <visual name="visual">
-          <geometry><box><size>0.5 0.5 0.5</size></box></geometry>
+          <geometry><box><size>0.4 0.4 0.4</size></box></geometry>
           <material>
             <ambient>0.9 0.6 0.1 1</ambient>
             <diffuse>0.9 0.6 0.1 1</diffuse>
             <pbr>
               <metal>
-                <albedo_map>/home/nemilai/ros2_ws/src/mini_r1_v1_description/worlds/generated/aruco_3.png</albedo_map>
+                <albedo_map>/home/tanay/ros2_ws/src/mini_r1_v1_description/worlds/generated/aruco_3.png</albedo_map>
               </metal>
             </pbr>
           </material>
         </visual>
         <collision name="collision">
-          <geometry><box><size>0.5 0.5 0.5</size></box></geometry>
+          <geometry><box><size>0.4 0.4 0.4</size></box></geometry>
         </collision>
       </link>
     </model>
 
-    <model name="aruco_4_v81">
+    <model name="aruco_4_v80">
       <static>true</static>
-      <pose>15.171779858803447 -25.52578435697096 0.25 0 0 0.4363323129985824</pose>
+      <pose>15.117840397118337 -25.435033826702337 0.2 0 0 0.4363323129985824</pose>
       <link name="link">
         <visual name="visual">
-          <geometry><box><size>0.5 0.5 0.5</size></box></geometry>
+          <geometry><box><size>0.4 0.4 0.4</size></box></geometry>
           <material>
             <ambient>0.9 0.6 0.1 1</ambient>
             <diffuse>0.9 0.6 0.1 1</diffuse>
             <pbr>
               <metal>
-                <albedo_map>/home/nemilai/ros2_ws/src/mini_r1_v1_description/worlds/generated/aruco_4.png</albedo_map>
+                <albedo_map>/home/tanay/ros2_ws/src/mini_r1_v1_description/worlds/generated/aruco_4.png</albedo_map>
               </metal>
             </pbr>
           </material>
         </visual>
         <collision name="collision">
-          <geometry><box><size>0.5 0.5 0.5</size></box></geometry>
+          <geometry><box><size>0.4 0.4 0.4</size></box></geometry>
         </collision>
+      </link>
+    </model>
+
+    <model name="sign_1_right_v81">
+      <static>true</static>
+      <pose>12.070542716287884 -2.603790961845581 0 0 0 3.141592653589793</pose>
+      <link name="link">
+        <!-- Pole -->
+        <visual name="pole">
+          <pose>0 0 0.075 0 0 0</pose>
+          <geometry><cylinder><radius>0.015</radius><length>0.15</length></cylinder></geometry>
+          <material>
+            <ambient>0.8 0.8 0.8 1</ambient><diffuse>0.8 0.8 0.8 1</diffuse>
+            <pbr><metal><albedo_map>file:///home/tanay/ros2_ws/src/mini_r1_v1_description/worlds/wood_texture.jpg</albedo_map></metal></pbr>
+          </material>
+        </visual>
+        <collision name="pole_col">
+          <pose>0 0 0.075 0 0 0</pose>
+          <geometry><cylinder><radius>0.015</radius><length>0.15</length></cylinder></geometry>
+        </collision>
+        <!-- Sign panel -->
+        <visual name="panel">
+          <pose>0 0 0.375 0 0 0</pose>
+          <geometry><box><size>0.015 0.45 0.45</size></box></geometry>
+          <material>
+            <ambient>0.8 0.8 0.8 1</ambient><diffuse>0.8 0.8 0.8 1</diffuse>
+            <pbr><metal><albedo_map>file:///home/tanay/ros2_ws/src/mini_r1_v1_description/worlds/wood_texture.jpg</albedo_map></metal></pbr>
+          </material>
+        </visual>
+        <!-- Sign face (front) -->
+        <visual name="sign_front">
+          <pose>0.0085 0 0.375 0 0 0</pose>
+          <geometry><box><size>0.001 0.45 0.45</size></box></geometry>
+          <material>
+            <ambient>1 1 1 1</ambient><diffuse>1 1 1 1</diffuse>
+            <pbr><metal><albedo_map>file:///home/tanay/ros2_ws/src/mini_r1_v1_description/worlds/generated/sign_1_right.png</albedo_map></metal></pbr>
+          </material>
+        </visual>
+        <collision name="panel_col">
+          <pose>0 0 0.375 0 0 0</pose>
+          <geometry><box><size>0.015 0.45 0.45</size></box></geometry>
+        </collision>
+      </link>
+    </model>
+
+    <model name="sign_2_left_v82">
+      <static>true</static>
+      <pose>2.395912264730239 -5.562657486045073 0 0 0 0.0</pose>
+      <link name="link">
+        <!-- Pole -->
+        <visual name="pole">
+          <pose>0 0 0.075 0 0 0</pose>
+          <geometry><cylinder><radius>0.015</radius><length>0.15</length></cylinder></geometry>
+          <material>
+            <ambient>0.8 0.8 0.8 1</ambient><diffuse>0.8 0.8 0.8 1</diffuse>
+            <pbr><metal><albedo_map>file:///home/tanay/ros2_ws/src/mini_r1_v1_description/worlds/wood_texture.jpg</albedo_map></metal></pbr>
+          </material>
+        </visual>
+        <collision name="pole_col">
+          <pose>0 0 0.075 0 0 0</pose>
+          <geometry><cylinder><radius>0.015</radius><length>0.15</length></cylinder></geometry>
+        </collision>
+        <!-- Sign panel -->
+        <visual name="panel">
+          <pose>0 0 0.375 0 0 0</pose>
+          <geometry><box><size>0.015 0.45 0.45</size></box></geometry>
+          <material>
+            <ambient>0.8 0.8 0.8 1</ambient><diffuse>0.8 0.8 0.8 1</diffuse>
+            <pbr><metal><albedo_map>file:///home/tanay/ros2_ws/src/mini_r1_v1_description/worlds/wood_texture.jpg</albedo_map></metal></pbr>
+          </material>
+        </visual>
+        <!-- Sign face (front) -->
+        <visual name="sign_front">
+          <pose>0.0085 0 0.375 0 0 0</pose>
+          <geometry><box><size>0.001 0.45 0.45</size></box></geometry>
+          <material>
+            <ambient>1 1 1 1</ambient><diffuse>1 1 1 1</diffuse>
+            <pbr><metal><albedo_map>file:///home/tanay/ros2_ws/src/mini_r1_v1_description/worlds/generated/sign_2_left.png</albedo_map></metal></pbr>
+          </material>
+        </visual>
+        <collision name="panel_col">
+          <pose>0 0 0.375 0 0 0</pose>
+          <geometry><box><size>0.015 0.45 0.45</size></box></geometry>
+        </collision>
+      </link>
+    </model>
+
+    <model name="sign_11_right_v83">
+      <static>true</static>
+      <pose>19.594979588531796 -5.158700102738178 0 0 0 3.141592653589793</pose>
+      <link name="link">
+        <!-- Pole -->
+        <visual name="pole">
+          <pose>0 0 0.075 0 0 0</pose>
+          <geometry><cylinder><radius>0.015</radius><length>0.15</length></cylinder></geometry>
+          <material>
+            <ambient>0.8 0.8 0.8 1</ambient><diffuse>0.8 0.8 0.8 1</diffuse>
+            <pbr><metal><albedo_map>file:///home/tanay/ros2_ws/src/mini_r1_v1_description/worlds/wood_texture.jpg</albedo_map></metal></pbr>
+          </material>
+        </visual>
+        <collision name="pole_col">
+          <pose>0 0 0.075 0 0 0</pose>
+          <geometry><cylinder><radius>0.015</radius><length>0.15</length></cylinder></geometry>
+        </collision>
+        <!-- Sign panel -->
+        <visual name="panel">
+          <pose>0 0 0.375 0 0 0</pose>
+          <geometry><box><size>0.015 0.45 0.45</size></box></geometry>
+          <material>
+            <ambient>0.8 0.8 0.8 1</ambient><diffuse>0.8 0.8 0.8 1</diffuse>
+            <pbr><metal><albedo_map>file:///home/tanay/ros2_ws/src/mini_r1_v1_description/worlds/wood_texture.jpg</albedo_map></metal></pbr>
+          </material>
+        </visual>
+        <!-- Sign face (front) -->
+        <visual name="sign_front">
+          <pose>0.0085 0 0.375 0 0 0</pose>
+          <geometry><box><size>0.001 0.45 0.45</size></box></geometry>
+          <material>
+            <ambient>1 1 1 1</ambient><diffuse>1 1 1 1</diffuse>
+            <pbr><metal><albedo_map>file:///home/tanay/ros2_ws/src/mini_r1_v1_description/worlds/generated/sign_11_right.png</albedo_map></metal></pbr>
+          </material>
+        </visual>
+        <collision name="panel_col">
+          <pose>0 0 0.375 0 0 0</pose>
+          <geometry><box><size>0.015 0.45 0.45</size></box></geometry>
+        </collision>
+      </link>
+    </model>
+
+    <model name="sign_10_forward_v84">
+      <static>true</static>
+      <pose>13.528671168945204 -14.534842661150034 0 0 0 1.5707963267948966</pose>
+      <link name="link">
+        <!-- Pole -->
+        <visual name="pole">
+          <pose>0 0 0.075 0 0 0</pose>
+          <geometry><cylinder><radius>0.015</radius><length>0.15</length></cylinder></geometry>
+          <material>
+            <ambient>0.8 0.8 0.8 1</ambient><diffuse>0.8 0.8 0.8 1</diffuse>
+            <pbr><metal><albedo_map>file:///home/tanay/ros2_ws/src/mini_r1_v1_description/worlds/wood_texture.jpg</albedo_map></metal></pbr>
+          </material>
+        </visual>
+        <collision name="pole_col">
+          <pose>0 0 0.075 0 0 0</pose>
+          <geometry><cylinder><radius>0.015</radius><length>0.15</length></cylinder></geometry>
+        </collision>
+        <!-- Sign panel -->
+        <visual name="panel">
+          <pose>0 0 0.375 0 0 0</pose>
+          <geometry><box><size>0.015 0.45 0.45</size></box></geometry>
+          <material>
+            <ambient>0.8 0.8 0.8 1</ambient><diffuse>0.8 0.8 0.8 1</diffuse>
+            <pbr><metal><albedo_map>file:///home/tanay/ros2_ws/src/mini_r1_v1_description/worlds/wood_texture.jpg</albedo_map></metal></pbr>
+          </material>
+        </visual>
+        <!-- Sign face (front) -->
+        <visual name="sign_front">
+          <pose>0.0085 0 0.375 0 0 0</pose>
+          <geometry><box><size>0.001 0.45 0.45</size></box></geometry>
+          <material>
+            <ambient>1 1 1 1</ambient><diffuse>1 1 1 1</diffuse>
+            <pbr><metal><albedo_map>file:///home/tanay/ros2_ws/src/mini_r1_v1_description/worlds/generated/sign_10_forward.png</albedo_map></metal></pbr>
+          </material>
+        </visual>
+        <collision name="panel_col">
+          <pose>0 0 0.375 0 0 0</pose>
+          <geometry><box><size>0.015 0.45 0.45</size></box></geometry>
+        </collision>
+      </link>
+    </model>
+
+    <model name="sign_12_rotate_180_clockwise_v85">
+      <static>true</static>
+      <pose>8.07224135133321 -15.52440315666892 0 0 0 4.71238898038469</pose>
+      <link name="link">
+        <!-- Pole -->
+        <visual name="pole">
+          <pose>0 0 0.075 0 0 0</pose>
+          <geometry><cylinder><radius>0.015</radius><length>0.15</length></cylinder></geometry>
+          <material>
+            <ambient>0.8 0.8 0.8 1</ambient><diffuse>0.8 0.8 0.8 1</diffuse>
+            <pbr><metal><albedo_map>file:///home/tanay/ros2_ws/src/mini_r1_v1_description/worlds/wood_texture.jpg</albedo_map></metal></pbr>
+          </material>
+        </visual>
+        <collision name="pole_col">
+          <pose>0 0 0.075 0 0 0</pose>
+          <geometry><cylinder><radius>0.015</radius><length>0.15</length></cylinder></geometry>
+        </collision>
+        <!-- Sign panel -->
+        <visual name="panel">
+          <pose>0 0 0.375 0 0 0</pose>
+          <geometry><box><size>0.015 0.45 0.45</size></box></geometry>
+          <material>
+            <ambient>0.8 0.8 0.8 1</ambient><diffuse>0.8 0.8 0.8 1</diffuse>
+            <pbr><metal><albedo_map>file:///home/tanay/ros2_ws/src/mini_r1_v1_description/worlds/wood_texture.jpg</albedo_map></metal></pbr>
+          </material>
+        </visual>
+        <!-- Sign face (front) -->
+        <visual name="sign_front">
+          <pose>0.0085 0 0.375 0 0 0</pose>
+          <geometry><box><size>0.001 0.45 0.45</size></box></geometry>
+          <material>
+            <ambient>1 1 1 1</ambient><diffuse>1 1 1 1</diffuse>
+            <pbr><metal><albedo_map>file:///home/tanay/ros2_ws/src/mini_r1_v1_description/worlds/generated/sign_12_rotate_180_clockwise.png</albedo_map></metal></pbr>
+          </material>
+        </visual>
+        <collision name="panel_col">
+          <pose>0 0 0.375 0 0 0</pose>
+          <geometry><box><size>0.015 0.45 0.45</size></box></geometry>
+        </collision>
+      </link>
+    </model>
+
+    <model name="sign_3_right_v86">
+      <static>true</static>
+      <pose>2.3496909602589033 -15.509129310753549 0 0 0 4.71238898038469</pose>
+      <link name="link">
+        <!-- Pole -->
+        <visual name="pole">
+          <pose>0 0 0.075 0 0 0</pose>
+          <geometry><cylinder><radius>0.015</radius><length>0.15</length></cylinder></geometry>
+          <material>
+            <ambient>0.8 0.8 0.8 1</ambient><diffuse>0.8 0.8 0.8 1</diffuse>
+            <pbr><metal><albedo_map>file:///home/tanay/ros2_ws/src/mini_r1_v1_description/worlds/wood_texture.jpg</albedo_map></metal></pbr>
+          </material>
+        </visual>
+        <collision name="pole_col">
+          <pose>0 0 0.075 0 0 0</pose>
+          <geometry><cylinder><radius>0.015</radius><length>0.15</length></cylinder></geometry>
+        </collision>
+        <!-- Sign panel -->
+        <visual name="panel">
+          <pose>0 0 0.375 0 0 0</pose>
+          <geometry><box><size>0.015 0.45 0.45</size></box></geometry>
+          <material>
+            <ambient>0.8 0.8 0.8 1</ambient><diffuse>0.8 0.8 0.8 1</diffuse>
+            <pbr><metal><albedo_map>file:///home/tanay/ros2_ws/src/mini_r1_v1_description/worlds/wood_texture.jpg</albedo_map></metal></pbr>
+          </material>
+        </visual>
+        <!-- Sign face (front) -->
+        <visual name="sign_front">
+          <pose>0.0085 0 0.375 0 0 0</pose>
+          <geometry><box><size>0.001 0.45 0.45</size></box></geometry>
+          <material>
+            <ambient>1 1 1 1</ambient><diffuse>1 1 1 1</diffuse>
+            <pbr><metal><albedo_map>file:///home/tanay/ros2_ws/src/mini_r1_v1_description/worlds/generated/sign_3_right.png</albedo_map></metal></pbr>
+          </material>
+        </visual>
+        <collision name="panel_col">
+          <pose>0 0 0.375 0 0 0</pose>
+          <geometry><box><size>0.015 0.45 0.45</size></box></geometry>
+        </collision>
+      </link>
+    </model>
+
+    <model name="sign_4_right_v87">
+      <static>true</static>
+      <pose>6.6312890828009365 -15.507544028912152 0 0 0 3.141592653589793</pose>
+      <link name="link">
+        <!-- Pole -->
+        <visual name="pole">
+          <pose>0 0 0.075 0 0 0</pose>
+          <geometry><cylinder><radius>0.015</radius><length>0.15</length></cylinder></geometry>
+          <material>
+            <ambient>0.8 0.8 0.8 1</ambient><diffuse>0.8 0.8 0.8 1</diffuse>
+            <pbr><metal><albedo_map>file:///home/tanay/ros2_ws/src/mini_r1_v1_description/worlds/wood_texture.jpg</albedo_map></metal></pbr>
+          </material>
+        </visual>
+        <collision name="pole_col">
+          <pose>0 0 0.075 0 0 0</pose>
+          <geometry><cylinder><radius>0.015</radius><length>0.15</length></cylinder></geometry>
+        </collision>
+        <!-- Sign panel -->
+        <visual name="panel">
+          <pose>0 0 0.375 0 0 0</pose>
+          <geometry><box><size>0.015 0.45 0.45</size></box></geometry>
+          <material>
+            <ambient>0.8 0.8 0.8 1</ambient><diffuse>0.8 0.8 0.8 1</diffuse>
+            <pbr><metal><albedo_map>file:///home/tanay/ros2_ws/src/mini_r1_v1_description/worlds/wood_texture.jpg</albedo_map></metal></pbr>
+          </material>
+        </visual>
+        <!-- Sign face (front) -->
+        <visual name="sign_front">
+          <pose>0.0085 0 0.375 0 0 0</pose>
+          <geometry><box><size>0.001 0.45 0.45</size></box></geometry>
+          <material>
+            <ambient>1 1 1 1</ambient><diffuse>1 1 1 1</diffuse>
+            <pbr><metal><albedo_map>file:///home/tanay/ros2_ws/src/mini_r1_v1_description/worlds/generated/sign_4_right.png</albedo_map></metal></pbr>
+          </material>
+        </visual>
+        <collision name="panel_col">
+          <pose>0 0 0.375 0 0 0</pose>
+          <geometry><box><size>0.015 0.45 0.45</size></box></geometry>
+        </collision>
+      </link>
+    </model>
+
+    <model name="sign_6_right_v88">
+      <static>true</static>
+      <pose>6.1146526232194525 -21.04196971312087 0 0 0 1.5707963267948966</pose>
+      <link name="link">
+        <!-- Pole -->
+        <visual name="pole">
+          <pose>0 0 0.075 0 0 0</pose>
+          <geometry><cylinder><radius>0.015</radius><length>0.15</length></cylinder></geometry>
+          <material>
+            <ambient>0.8 0.8 0.8 1</ambient><diffuse>0.8 0.8 0.8 1</diffuse>
+            <pbr><metal><albedo_map>file:///home/tanay/ros2_ws/src/mini_r1_v1_description/worlds/wood_texture.jpg</albedo_map></metal></pbr>
+          </material>
+        </visual>
+        <collision name="pole_col">
+          <pose>0 0 0.075 0 0 0</pose>
+          <geometry><cylinder><radius>0.015</radius><length>0.15</length></cylinder></geometry>
+        </collision>
+        <!-- Sign panel -->
+        <visual name="panel">
+          <pose>0 0 0.375 0 0 0</pose>
+          <geometry><box><size>0.015 0.45 0.45</size></box></geometry>
+          <material>
+            <ambient>0.8 0.8 0.8 1</ambient><diffuse>0.8 0.8 0.8 1</diffuse>
+            <pbr><metal><albedo_map>file:///home/tanay/ros2_ws/src/mini_r1_v1_description/worlds/wood_texture.jpg</albedo_map></metal></pbr>
+          </material>
+        </visual>
+        <!-- Sign face (front) -->
+        <visual name="sign_front">
+          <pose>0.0085 0 0.375 0 0 0</pose>
+          <geometry><box><size>0.001 0.45 0.45</size></box></geometry>
+          <material>
+            <ambient>1 1 1 1</ambient><diffuse>1 1 1 1</diffuse>
+            <pbr><metal><albedo_map>file:///home/tanay/ros2_ws/src/mini_r1_v1_description/worlds/generated/sign_6_right.png</albedo_map></metal></pbr>
+          </material>
+        </visual>
+        <collision name="panel_col">
+          <pose>0 0 0.375 0 0 0</pose>
+          <geometry><box><size>0.015 0.45 0.45</size></box></geometry>
+        </collision>
+      </link>
+    </model>
+
+    <model name="sign_5_right_v89">
+      <static>true</static>
+      <pose>2.4619564847487805 -20.058226512706934 0 0 0 0.0</pose>
+      <link name="link">
+        <!-- Pole -->
+        <visual name="pole">
+          <pose>0 0 0.075 0 0 0</pose>
+          <geometry><cylinder><radius>0.015</radius><length>0.15</length></cylinder></geometry>
+          <material>
+            <ambient>0.8 0.8 0.8 1</ambient><diffuse>0.8 0.8 0.8 1</diffuse>
+            <pbr><metal><albedo_map>file:///home/tanay/ros2_ws/src/mini_r1_v1_description/worlds/wood_texture.jpg</albedo_map></metal></pbr>
+          </material>
+        </visual>
+        <collision name="pole_col">
+          <pose>0 0 0.075 0 0 0</pose>
+          <geometry><cylinder><radius>0.015</radius><length>0.15</length></cylinder></geometry>
+        </collision>
+        <!-- Sign panel -->
+        <visual name="panel">
+          <pose>0 0 0.375 0 0 0</pose>
+          <geometry><box><size>0.015 0.45 0.45</size></box></geometry>
+          <material>
+            <ambient>0.8 0.8 0.8 1</ambient><diffuse>0.8 0.8 0.8 1</diffuse>
+            <pbr><metal><albedo_map>file:///home/tanay/ros2_ws/src/mini_r1_v1_description/worlds/wood_texture.jpg</albedo_map></metal></pbr>
+          </material>
+        </visual>
+        <!-- Sign face (front) -->
+        <visual name="sign_front">
+          <pose>0.0085 0 0.375 0 0 0</pose>
+          <geometry><box><size>0.001 0.45 0.45</size></box></geometry>
+          <material>
+            <ambient>1 1 1 1</ambient><diffuse>1 1 1 1</diffuse>
+            <pbr><metal><albedo_map>file:///home/tanay/ros2_ws/src/mini_r1_v1_description/worlds/generated/sign_5_right.png</albedo_map></metal></pbr>
+          </material>
+        </visual>
+        <collision name="panel_col">
+          <pose>0 0 0.375 0 0 0</pose>
+          <geometry><box><size>0.015 0.45 0.45</size></box></geometry>
+        </collision>
+      </link>
+    </model>
+
+    <model name="sign_7_forward_v90">
+      <static>true</static>
+      <pose>10.089684807754317 -18.83749056953392 0 0 0 3.141592653589793</pose>
+      <link name="link">
+        <!-- Pole -->
+        <visual name="pole">
+          <pose>0 0 0.075 0 0 0</pose>
+          <geometry><cylinder><radius>0.015</radius><length>0.15</length></cylinder></geometry>
+          <material>
+            <ambient>0.8 0.8 0.8 1</ambient><diffuse>0.8 0.8 0.8 1</diffuse>
+            <pbr><metal><albedo_map>file:///home/tanay/ros2_ws/src/mini_r1_v1_description/worlds/wood_texture.jpg</albedo_map></metal></pbr>
+          </material>
+        </visual>
+        <collision name="pole_col">
+          <pose>0 0 0.075 0 0 0</pose>
+          <geometry><cylinder><radius>0.015</radius><length>0.15</length></cylinder></geometry>
+        </collision>
+        <!-- Sign panel -->
+        <visual name="panel">
+          <pose>0 0 0.375 0 0 0</pose>
+          <geometry><box><size>0.015 0.45 0.45</size></box></geometry>
+          <material>
+            <ambient>0.8 0.8 0.8 1</ambient><diffuse>0.8 0.8 0.8 1</diffuse>
+            <pbr><metal><albedo_map>file:///home/tanay/ros2_ws/src/mini_r1_v1_description/worlds/wood_texture.jpg</albedo_map></metal></pbr>
+          </material>
+        </visual>
+        <!-- Sign face (front) -->
+        <visual name="sign_front">
+          <pose>0.0085 0 0.375 0 0 0</pose>
+          <geometry><box><size>0.001 0.45 0.45</size></box></geometry>
+          <material>
+            <ambient>1 1 1 1</ambient><diffuse>1 1 1 1</diffuse>
+            <pbr><metal><albedo_map>file:///home/tanay/ros2_ws/src/mini_r1_v1_description/worlds/generated/sign_7_forward.png</albedo_map></metal></pbr>
+          </material>
+        </visual>
+        <collision name="panel_col">
+          <pose>0 0 0.375 0 0 0</pose>
+          <geometry><box><size>0.015 0.45 0.45</size></box></geometry>
+        </collision>
+      </link>
+    </model>
+
+    <model name="sign_8_right_v91">
+      <static>true</static>
+      <pose>14.515640073279897 -19.052303151572936 0 0 0 3.141592653589793</pose>
+      <link name="link">
+        <!-- Pole -->
+        <visual name="pole">
+          <pose>0 0 0.075 0 0 0</pose>
+          <geometry><cylinder><radius>0.015</radius><length>0.15</length></cylinder></geometry>
+          <material>
+            <ambient>0.8 0.8 0.8 1</ambient><diffuse>0.8 0.8 0.8 1</diffuse>
+            <pbr><metal><albedo_map>file:///home/tanay/ros2_ws/src/mini_r1_v1_description/worlds/wood_texture.jpg</albedo_map></metal></pbr>
+          </material>
+        </visual>
+        <collision name="pole_col">
+          <pose>0 0 0.075 0 0 0</pose>
+          <geometry><cylinder><radius>0.015</radius><length>0.15</length></cylinder></geometry>
+        </collision>
+        <!-- Sign panel -->
+        <visual name="panel">
+          <pose>0 0 0.375 0 0 0</pose>
+          <geometry><box><size>0.015 0.45 0.45</size></box></geometry>
+          <material>
+            <ambient>0.8 0.8 0.8 1</ambient><diffuse>0.8 0.8 0.8 1</diffuse>
+            <pbr><metal><albedo_map>file:///home/tanay/ros2_ws/src/mini_r1_v1_description/worlds/wood_texture.jpg</albedo_map></metal></pbr>
+          </material>
+        </visual>
+        <!-- Sign face (front) -->
+        <visual name="sign_front">
+          <pose>0.0085 0 0.375 0 0 0</pose>
+          <geometry><box><size>0.001 0.45 0.45</size></box></geometry>
+          <material>
+            <ambient>1 1 1 1</ambient><diffuse>1 1 1 1</diffuse>
+            <pbr><metal><albedo_map>file:///home/tanay/ros2_ws/src/mini_r1_v1_description/worlds/generated/sign_8_right.png</albedo_map></metal></pbr>
+          </material>
+        </visual>
+        <collision name="panel_col">
+          <pose>0 0 0.375 0 0 0</pose>
+          <geometry><box><size>0.015 0.45 0.45</size></box></geometry>
+        </collision>
+      </link>
+    </model>
+
+    <model name="sign_12_rotate_180_clockwise_v92">
+      <static>true</static>
+      <pose>6.048801394033776 -25.437308361518255 0 0 0 3.141592653589793</pose>
+      <link name="link">
+        <!-- Pole -->
+        <visual name="pole">
+          <pose>0 0 0.075 0 0 0</pose>
+          <geometry><cylinder><radius>0.015</radius><length>0.15</length></cylinder></geometry>
+          <material>
+            <ambient>0.8 0.8 0.8 1</ambient><diffuse>0.8 0.8 0.8 1</diffuse>
+            <pbr><metal><albedo_map>file:///home/tanay/ros2_ws/src/mini_r1_v1_description/worlds/wood_texture.jpg</albedo_map></metal></pbr>
+          </material>
+        </visual>
+        <collision name="pole_col">
+          <pose>0 0 0.075 0 0 0</pose>
+          <geometry><cylinder><radius>0.015</radius><length>0.15</length></cylinder></geometry>
+        </collision>
+        <!-- Sign panel -->
+        <visual name="panel">
+          <pose>0 0 0.375 0 0 0</pose>
+          <geometry><box><size>0.015 0.45 0.45</size></box></geometry>
+          <material>
+            <ambient>0.8 0.8 0.8 1</ambient><diffuse>0.8 0.8 0.8 1</diffuse>
+            <pbr><metal><albedo_map>file:///home/tanay/ros2_ws/src/mini_r1_v1_description/worlds/wood_texture.jpg</albedo_map></metal></pbr>
+          </material>
+        </visual>
+        <!-- Sign face (front) -->
+        <visual name="sign_front">
+          <pose>0.0085 0 0.375 0 0 0</pose>
+          <geometry><box><size>0.001 0.45 0.45</size></box></geometry>
+          <material>
+            <ambient>1 1 1 1</ambient><diffuse>1 1 1 1</diffuse>
+            <pbr><metal><albedo_map>file:///home/tanay/ros2_ws/src/mini_r1_v1_description/worlds/generated/sign_12_rotate_180_clockwise.png</albedo_map></metal></pbr>
+          </material>
+        </visual>
+        <collision name="panel_col">
+          <pose>0 0 0.375 0 0 0</pose>
+          <geometry><box><size>0.015 0.45 0.45</size></box></geometry>
+        </collision>
+      </link>
+    </model>
+
+    <model name="sign_9_forward_v93">
+      <static>true</static>
+      <pose>6.5738605249639 -27.449816766641796 0 0 0 3.141592653589793</pose>
+      <link name="link">
+        <!-- Pole -->
+        <visual name="pole">
+          <pose>0 0 0.075 0 0 0</pose>
+          <geometry><cylinder><radius>0.015</radius><length>0.15</length></cylinder></geometry>
+          <material>
+            <ambient>0.8 0.8 0.8 1</ambient><diffuse>0.8 0.8 0.8 1</diffuse>
+            <pbr><metal><albedo_map>file:///home/tanay/ros2_ws/src/mini_r1_v1_description/worlds/wood_texture.jpg</albedo_map></metal></pbr>
+          </material>
+        </visual>
+        <collision name="pole_col">
+          <pose>0 0 0.075 0 0 0</pose>
+          <geometry><cylinder><radius>0.015</radius><length>0.15</length></cylinder></geometry>
+        </collision>
+        <!-- Sign panel -->
+        <visual name="panel">
+          <pose>0 0 0.375 0 0 0</pose>
+          <geometry><box><size>0.015 0.45 0.45</size></box></geometry>
+          <material>
+            <ambient>0.8 0.8 0.8 1</ambient><diffuse>0.8 0.8 0.8 1</diffuse>
+            <pbr><metal><albedo_map>file:///home/tanay/ros2_ws/src/mini_r1_v1_description/worlds/wood_texture.jpg</albedo_map></metal></pbr>
+          </material>
+        </visual>
+        <!-- Sign face (front) -->
+        <visual name="sign_front">
+          <pose>0.0085 0 0.375 0 0 0</pose>
+          <geometry><box><size>0.001 0.45 0.45</size></box></geometry>
+          <material>
+            <ambient>1 1 1 1</ambient><diffuse>1 1 1 1</diffuse>
+            <pbr><metal><albedo_map>file:///home/tanay/ros2_ws/src/mini_r1_v1_description/worlds/generated/sign_9_forward.png</albedo_map></metal></pbr>
+          </material>
+        </visual>
+        <collision name="panel_col">
+          <pose>0 0 0.375 0 0 0</pose>
+          <geometry><box><size>0.015 0.45 0.45</size></box></geometry>
+        </collision>
+      </link>
+    </model>
+
+    <model name="sign_3_left_v95">
+      <static>true</static>
+      <pose>2.346423901159677 -15.247089114900398 0 0 0 1.5707963267948966</pose>
+      <link name="link">
+        <!-- Pole -->
+        <visual name="pole">
+          <pose>0 0 0.075 0 0 0</pose>
+          <geometry><cylinder><radius>0.015</radius><length>0.15</length></cylinder></geometry>
+          <material>
+            <ambient>0.8 0.8 0.8 1</ambient><diffuse>0.8 0.8 0.8 1</diffuse>
+            <pbr><metal><albedo_map>file:///home/tanay/ros2_ws/src/mini_r1_v1_description/worlds/wood_texture.jpg</albedo_map></metal></pbr>
+          </material>
+        </visual>
+        <collision name="pole_col">
+          <pose>0 0 0.075 0 0 0</pose>
+          <geometry><cylinder><radius>0.015</radius><length>0.15</length></cylinder></geometry>
+        </collision>
+        <!-- Sign panel -->
+        <visual name="panel">
+          <pose>0 0 0.375 0 0 0</pose>
+          <geometry><box><size>0.015 0.45 0.45</size></box></geometry>
+          <material>
+            <ambient>0.8 0.8 0.8 1</ambient><diffuse>0.8 0.8 0.8 1</diffuse>
+            <pbr><metal><albedo_map>file:///home/tanay/ros2_ws/src/mini_r1_v1_description/worlds/wood_texture.jpg</albedo_map></metal></pbr>
+          </material>
+        </visual>
+        <!-- Sign face (front) -->
+        <visual name="sign_front">
+          <pose>0.0085 0 0.375 0 0 0</pose>
+          <geometry><box><size>0.001 0.45 0.45</size></box></geometry>
+          <material>
+            <ambient>1 1 1 1</ambient><diffuse>1 1 1 1</diffuse>
+            <pbr><metal><albedo_map>file:///home/tanay/ros2_ws/src/mini_r1_v1_description/worlds/generated/sign_3_left.png</albedo_map></metal></pbr>
+          </material>
+        </visual>
+        <collision name="panel_col">
+          <pose>0 0 0.375 0 0 0</pose>
+          <geometry><box><size>0.015 0.45 0.45</size></box></geometry>
+        </collision>
+      </link>
+    </model>
+
+    <model name="zone_start">
+      <static>true</static>
+      <pose>3.0366831850228415 -2.6109867628995738 1.0 0 0 0</pose>
+      <link name="link">
+        <visual name="cylinder">
+          <visibility_flags>1</visibility_flags>
+          <transparency>0.4</transparency>
+          <geometry>
+            <cylinder>
+              <radius>1.0</radius>
+              <length>2.0</length>
+            </cylinder>
+          </geometry>
+          <material>
+            <ambient>1.0 0.5 0.0 1.0</ambient>
+            <diffuse>1.0 0.5 0.0 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+
+    <model name="zone_goal">
+      <static>true</static>
+      <pose>19.138349492912056 -28.40637582974065 1.0 0 0 0</pose>
+      <link name="link">
+        <visual name="cylinder">
+          <visibility_flags>1</visibility_flags>
+          <transparency>0.4</transparency>
+          <geometry>
+            <cylinder>
+              <radius>1.0</radius>
+              <length>2.0</length>
+            </cylinder>
+          </geometry>
+          <material>
+            <ambient>0.0 1.0 1.0 1.0</ambient>
+            <diffuse>0.0 1.0 1.0 1.0</diffuse>
+          </material>
+        </visual>
       </link>
     </model>
   </world>

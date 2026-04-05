@@ -6,8 +6,8 @@ marker_detector_node:
     max_aruco_id: 10              # discard IDs above this
 
     # ── ArUco marker physical size ───────────────
-    aruco_marker_length: 0.5      # metres (side length of the printed marker)
-    aruco_box_size: 0.5           # metres (side length of the Gazebo cube)
+    aruco_marker_length: 0.4      # metres (side length of the printed marker)
+    aruco_box_size: 0.4           # metres (side length of the Gazebo cube)
 
     # ── Arrow / Sign Detection ───────────────────
     # Preprocessing
@@ -32,6 +32,6 @@ marker_detector_node:
     sign_curved_tip_max_angle: 60.0   # max tip angle (degrees)
 
     # Sign panel physical size (matching Gazebo model)
-    sign_panel_width: 0.3         # metres
-    sign_panel_height: 0.3        # metres
+    sign_panel_width: 0.45        # metres
+    sign_panel_height: 0.45       # metres
     sign_panel_thickness: 0.015   # metres

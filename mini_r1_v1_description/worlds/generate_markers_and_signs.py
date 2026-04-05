@@ -24,7 +24,7 @@ from PIL import Image, ImageOps
 # ---------------------------------------------------------------------------
 ARUCO_DICT = cv2.aruco.DICT_4X4_50
 ARUCO_IMG_PX = 512            # generated marker image resolution
-ARUCO_BOX_SIZE = 0.5          # metres
+ARUCO_BOX_SIZE = 0.4          # metres
 ARUCO_BOX_COLOR = "0.9 0.6 0.1 1"  # distinct orange-amber colour
 
 ZONE_RADIUS = 1.0             # metres
@@ -33,12 +33,12 @@ ZONE_TRANSPARENCY = 0.4
 ZONE_START_COLOR = "1.0 0.5 0.0 1.0"
 ZONE_GOAL_COLOR = "0.0 1.0 1.0 1.0"
 
-SIGN_PANEL_W = 0.3            # metres
-SIGN_PANEL_H = 0.3
+SIGN_PANEL_W = 0.45           # metres
+SIGN_PANEL_H = 0.45
 SIGN_PANEL_THICKNESS = 0.015
-SIGN_PANEL_ELEVATION = 0.30   # centre-of-panel above ground
 POLE_RADIUS = 0.015
-POLE_HEIGHT = SIGN_PANEL_ELEVATION - SIGN_PANEL_H / 2  # ground to bottom of panel
+POLE_HEIGHT = 0.15            # fixed pole dimensions exactly as before
+SIGN_PANEL_ELEVATION = POLE_HEIGHT + (SIGN_PANEL_H / 2)  # centre-of-panel above ground
 
 
 # ---------------------------------------------------------------------------
