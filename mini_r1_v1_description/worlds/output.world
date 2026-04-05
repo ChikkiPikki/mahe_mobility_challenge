@@ -466,7 +466,7 @@
             <diffuse>0.9 0.6 0.1 1</diffuse>
             <pbr>
               <metal>
-                <albedo_map>/home/tanay/ros2_ws/src/mini_r1_v1_description/worlds/generated/aruco_0.png</albedo_map>
+                <albedo_map>/home/nemilai/ros2_ws/src/mini_r1_v1_description/worlds/generated/aruco_0.png</albedo_map>
               </metal>
             </pbr>
           </material>
@@ -488,7 +488,7 @@
             <diffuse>0.9 0.6 0.1 1</diffuse>
             <pbr>
               <metal>
-                <albedo_map>/home/tanay/ros2_ws/src/mini_r1_v1_description/worlds/generated/aruco_2.png</albedo_map>
+                <albedo_map>/home/nemilai/ros2_ws/src/mini_r1_v1_description/worlds/generated/aruco_2.png</albedo_map>
               </metal>
             </pbr>
           </material>
@@ -510,7 +510,7 @@
             <diffuse>0.9 0.6 0.1 1</diffuse>
             <pbr>
               <metal>
-                <albedo_map>/home/tanay/ros2_ws/src/mini_r1_v1_description/worlds/generated/aruco_3.png</albedo_map>
+                <albedo_map>/home/nemilai/ros2_ws/src/mini_r1_v1_description/worlds/generated/aruco_3.png</albedo_map>
               </metal>
             </pbr>
           </material>
@@ -532,7 +532,7 @@
             <diffuse>0.9 0.6 0.1 1</diffuse>
             <pbr>
               <metal>
-                <albedo_map>/home/tanay/ros2_ws/src/mini_r1_v1_description/worlds/generated/aruco_1.png</albedo_map>
+                <albedo_map>/home/nemilai/ros2_ws/src/mini_r1_v1_description/worlds/generated/aruco_1.png</albedo_map>
               </metal>
             </pbr>
           </material>
@@ -554,7 +554,7 @@
             <diffuse>0.9 0.6 0.1 1</diffuse>
             <pbr>
               <metal>
-                <albedo_map>/home/tanay/ros2_ws/src/mini_r1_v1_description/worlds/generated/aruco_4.png</albedo_map>
+                <albedo_map>/home/nemilai/ros2_ws/src/mini_r1_v1_description/worlds/generated/aruco_4.png</albedo_map>
               </metal>
             </pbr>
           </material>
@@ -575,7 +575,7 @@
           <geometry><cylinder><radius>0.015</radius><length>0.15</length></cylinder></geometry>
           <material>
             <ambient>0.8 0.8 0.8 1</ambient><diffuse>0.8 0.8 0.8 1</diffuse>
-            <pbr><metal><albedo_map>file:///home/tanay/ros2_ws/src/mini_r1_v1_description/worlds/wood_texture.jpg</albedo_map></metal></pbr>
+            <pbr><metal><albedo_map>file:///home/nemilai/ros2_ws/src/mini_r1_v1_description/worlds/wood_texture.jpg</albedo_map></metal></pbr>
           </material>
         </visual>
         <collision name="pole_col">
@@ -588,7 +588,7 @@
           <geometry><box><size>0.015 0.3 0.3</size></box></geometry>
           <material>
             <ambient>0.8 0.8 0.8 1</ambient><diffuse>0.8 0.8 0.8 1</diffuse>
-            <pbr><metal><albedo_map>file:///home/tanay/ros2_ws/src/mini_r1_v1_description/worlds/wood_texture.jpg</albedo_map></metal></pbr>
+            <pbr><metal><albedo_map>file:///home/nemilai/ros2_ws/src/mini_r1_v1_description/worlds/wood_texture.jpg</albedo_map></metal></pbr>
           </material>
         </visual>
         <!-- Sign face (front) -->
@@ -597,7 +597,7 @@
           <geometry><box><size>0.001 0.3 0.3</size></box></geometry>
           <material>
             <ambient>1 1 1 1</ambient><diffuse>1 1 1 1</diffuse>
-            <pbr><metal><albedo_map>file:///home/tanay/ros2_ws/src/mini_r1_v1_description/worlds/generated/sign_3_rotate_180_clockwise.png</albedo_map></metal></pbr>
+            <pbr><metal><albedo_map>file:///home/nemilai/ros2_ws/src/mini_r1_v1_description/worlds/generated/sign_3_rotate_180_clockwise.png</albedo_map></metal></pbr>
           </material>
         </visual>
         <collision name="panel_col">
@@ -617,7 +617,7 @@
           <geometry><cylinder><radius>0.015</radius><length>0.15</length></cylinder></geometry>
           <material>
             <ambient>0.8 0.8 0.8 1</ambient><diffuse>0.8 0.8 0.8 1</diffuse>
-            <pbr><metal><albedo_map>file:///home/tanay/ros2_ws/src/mini_r1_v1_description/worlds/wood_texture.jpg</albedo_map></metal></pbr>
+            <pbr><metal><albedo_map>file:///home/nemilai/ros2_ws/src/mini_r1_v1_description/worlds/wood_texture.jpg</albedo_map></metal></pbr>
           </material>
         </visual>
         <collision name="pole_col">
@@ -630,7 +630,7 @@
           <geometry><box><size>0.015 0.3 0.3</size></box></geometry>
           <material>
             <ambient>0.8 0.8 0.8 1</ambient><diffuse>0.8 0.8 0.8 1</diffuse>
-            <pbr><metal><albedo_map>file:///home/tanay/ros2_ws/src/mini_r1_v1_description/worlds/wood_texture.jpg</albedo_map></metal></pbr>
+            <pbr><metal><albedo_map>file:///home/nemilai/ros2_ws/src/mini_r1_v1_description/worlds/wood_texture.jpg</albedo_map></metal></pbr>
           </material>
         </visual>
         <!-- Sign face (front) -->
@@ -639,7 +639,7 @@
           <geometry><box><size>0.001 0.3 0.3</size></box></geometry>
           <material>
             <ambient>1 1 1 1</ambient><diffuse>1 1 1 1</diffuse>
-            <pbr><metal><albedo_map>file:///home/tanay/ros2_ws/src/mini_r1_v1_description/worlds/generated/sign_0_left.png</albedo_map></metal></pbr>
+            <pbr><metal><albedo_map>file:///home/nemilai/ros2_ws/src/mini_r1_v1_description/worlds/generated/sign_0_left.png</albedo_map></metal></pbr>
           </material>
         </visual>
         <collision name="panel_col">
@@ -659,7 +659,7 @@
           <geometry><cylinder><radius>0.015</radius><length>0.15</length></cylinder></geometry>
           <material>
             <ambient>0.8 0.8 0.8 1</ambient><diffuse>0.8 0.8 0.8 1</diffuse>
-            <pbr><metal><albedo_map>file:///home/tanay/ros2_ws/src/mini_r1_v1_description/worlds/wood_texture.jpg</albedo_map></metal></pbr>
+            <pbr><metal><albedo_map>file:///home/nemilai/ros2_ws/src/mini_r1_v1_description/worlds/wood_texture.jpg</albedo_map></metal></pbr>
           </material>
         </visual>
         <collision name="pole_col">
@@ -672,7 +672,7 @@
           <geometry><box><size>0.015 0.3 0.3</size></box></geometry>
           <material>
             <ambient>0.8 0.8 0.8 1</ambient><diffuse>0.8 0.8 0.8 1</diffuse>
-            <pbr><metal><albedo_map>file:///home/tanay/ros2_ws/src/mini_r1_v1_description/worlds/wood_texture.jpg</albedo_map></metal></pbr>
+            <pbr><metal><albedo_map>file:///home/nemilai/ros2_ws/src/mini_r1_v1_description/worlds/wood_texture.jpg</albedo_map></metal></pbr>
           </material>
         </visual>
         <!-- Sign face (front) -->
@@ -681,7 +681,7 @@
           <geometry><box><size>0.001 0.3 0.3</size></box></geometry>
           <material>
             <ambient>1 1 1 1</ambient><diffuse>1 1 1 1</diffuse>
-            <pbr><metal><albedo_map>file:///home/tanay/ros2_ws/src/mini_r1_v1_description/worlds/generated/sign_1_forward.png</albedo_map></metal></pbr>
+            <pbr><metal><albedo_map>file:///home/nemilai/ros2_ws/src/mini_r1_v1_description/worlds/generated/sign_1_forward.png</albedo_map></metal></pbr>
           </material>
         </visual>
         <collision name="panel_col">
@@ -701,7 +701,7 @@
           <geometry><cylinder><radius>0.015</radius><length>0.15</length></cylinder></geometry>
           <material>
             <ambient>0.8 0.8 0.8 1</ambient><diffuse>0.8 0.8 0.8 1</diffuse>
-            <pbr><metal><albedo_map>file:///home/tanay/ros2_ws/src/mini_r1_v1_description/worlds/wood_texture.jpg</albedo_map></metal></pbr>
+            <pbr><metal><albedo_map>file:///home/nemilai/ros2_ws/src/mini_r1_v1_description/worlds/wood_texture.jpg</albedo_map></metal></pbr>
           </material>
         </visual>
         <collision name="pole_col">
@@ -714,7 +714,7 @@
           <geometry><box><size>0.015 0.3 0.3</size></box></geometry>
           <material>
             <ambient>0.8 0.8 0.8 1</ambient><diffuse>0.8 0.8 0.8 1</diffuse>
-            <pbr><metal><albedo_map>file:///home/tanay/ros2_ws/src/mini_r1_v1_description/worlds/wood_texture.jpg</albedo_map></metal></pbr>
+            <pbr><metal><albedo_map>file:///home/nemilai/ros2_ws/src/mini_r1_v1_description/worlds/wood_texture.jpg</albedo_map></metal></pbr>
           </material>
         </visual>
         <!-- Sign face (front) -->
@@ -723,7 +723,7 @@
           <geometry><box><size>0.001 0.3 0.3</size></box></geometry>
           <material>
             <ambient>1 1 1 1</ambient><diffuse>1 1 1 1</diffuse>
-            <pbr><metal><albedo_map>file:///home/tanay/ros2_ws/src/mini_r1_v1_description/worlds/generated/sign_2_right.png</albedo_map></metal></pbr>
+            <pbr><metal><albedo_map>file:///home/nemilai/ros2_ws/src/mini_r1_v1_description/worlds/generated/sign_2_right.png</albedo_map></metal></pbr>
           </material>
         </visual>
         <collision name="panel_col">
@@ -743,7 +743,7 @@
           <geometry><cylinder><radius>0.015</radius><length>0.15</length></cylinder></geometry>
           <material>
             <ambient>0.8 0.8 0.8 1</ambient><diffuse>0.8 0.8 0.8 1</diffuse>
-            <pbr><metal><albedo_map>file:///home/tanay/ros2_ws/src/mini_r1_v1_description/worlds/wood_texture.jpg</albedo_map></metal></pbr>
+            <pbr><metal><albedo_map>file:///home/nemilai/ros2_ws/src/mini_r1_v1_description/worlds/wood_texture.jpg</albedo_map></metal></pbr>
           </material>
         </visual>
         <collision name="pole_col">
@@ -756,7 +756,7 @@
           <geometry><box><size>0.015 0.3 0.3</size></box></geometry>
           <material>
             <ambient>0.8 0.8 0.8 1</ambient><diffuse>0.8 0.8 0.8 1</diffuse>
-            <pbr><metal><albedo_map>file:///home/tanay/ros2_ws/src/mini_r1_v1_description/worlds/wood_texture.jpg</albedo_map></metal></pbr>
+            <pbr><metal><albedo_map>file:///home/nemilai/ros2_ws/src/mini_r1_v1_description/worlds/wood_texture.jpg</albedo_map></metal></pbr>
           </material>
         </visual>
         <!-- Sign face (front) -->
@@ -765,13 +765,55 @@
           <geometry><box><size>0.001 0.3 0.3</size></box></geometry>
           <material>
             <ambient>1 1 1 1</ambient><diffuse>1 1 1 1</diffuse>
-            <pbr><metal><albedo_map>file:///home/tanay/ros2_ws/src/mini_r1_v1_description/worlds/generated/sign_4_rotate_180_clockwise.png</albedo_map></metal></pbr>
+            <pbr><metal><albedo_map>file:///home/nemilai/ros2_ws/src/mini_r1_v1_description/worlds/generated/sign_4_rotate_180_clockwise.png</albedo_map></metal></pbr>
           </material>
         </visual>
         <collision name="panel_col">
           <pose>0 0 0.3 0 0 0</pose>
           <geometry><box><size>0.015 0.3 0.3</size></box></geometry>
         </collision>
+      </link>
+    </model>
+
+    <model name="zone_start">
+      <static>true</static>
+      <pose>13.932069984975524 -7.936994135608007 1.0 0 0 0</pose>
+      <link name="link">
+        <visual name="cylinder">
+          <visibility_flags>1</visibility_flags>
+          <transparency>0.4</transparency>
+          <geometry>
+            <cylinder>
+              <radius>1.0</radius>
+              <length>2.0</length>
+            </cylinder>
+          </geometry>
+          <material>
+            <ambient>1.0 0.5 0.0 1.0</ambient>
+            <diffuse>1.0 0.5 0.0 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+
+    <model name="zone_goal">
+      <static>true</static>
+      <pose>7.400688217903358 -18.933523966461493 1.0 0 0 0</pose>
+      <link name="link">
+        <visual name="cylinder">
+          <visibility_flags>1</visibility_flags>
+          <transparency>0.4</transparency>
+          <geometry>
+            <cylinder>
+              <radius>1.0</radius>
+              <length>2.0</length>
+            </cylinder>
+          </geometry>
+          <material>
+            <ambient>0.0 1.0 1.0 1.0</ambient>
+            <diffuse>0.0 1.0 1.0 1.0</diffuse>
+          </material>
+        </visual>
       </link>
     </model>
   </world>

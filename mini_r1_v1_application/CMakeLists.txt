@@ -10,6 +10,7 @@ find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(rviz_common REQUIRED)
 find_package(visualization_msgs REQUIRED)
+find_package(std_msgs REQUIRED)
 find_package(Qt5 REQUIRED COMPONENTS Core Widgets)
 
 set(CMAKE_AUTOMOC ON)
@@ -29,6 +30,7 @@ ament_target_dependencies(mission_control_panel
   rclcpp
   rviz_common
   visualization_msgs
+  std_msgs
 )
 target_link_libraries(mission_control_panel Qt5::Widgets)
 
@@ -51,6 +53,7 @@ install(FILES
 # Install Python scripts
 install(PROGRAMS
   scripts/marker_detector_node.py
+  scripts/mission_zone_node.py
   DESTINATION lib/${PROJECT_NAME}
 )
 

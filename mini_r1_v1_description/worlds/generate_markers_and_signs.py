@@ -27,6 +27,12 @@ ARUCO_IMG_PX = 512            # generated marker image resolution
 ARUCO_BOX_SIZE = 0.5          # metres
 ARUCO_BOX_COLOR = "0.9 0.6 0.1 1"  # distinct orange-amber colour
 
+ZONE_RADIUS = 1.0             # metres
+ZONE_HEIGHT = 2.0             # metres
+ZONE_TRANSPARENCY = 0.4
+ZONE_START_COLOR = "1.0 0.5 0.0 1.0"
+ZONE_GOAL_COLOR = "0.0 1.0 1.0 1.0"
+
 SIGN_PANEL_W = 0.3            # metres
 SIGN_PANEL_H = 0.3
 SIGN_PANEL_THICKNESS = 0.015
@@ -117,6 +123,37 @@ def generate_sign_image(sign_type, sign_config, worlds_dir, out_path):
         img = ImageOps.mirror(img)
 
     img.save(out_path)
+
+
+def zone_model_sdf(name, wx, wy, color, label):
+    """Return an inline SDF <model> for a zone cylinder.
+    visibility_flags=1 (bit 0 only) makes this visual invisible to
+    sensors whose visibility_mask excludes bit 0 (mask 0xFFFFFFFE =
+    4294967294).  The Gazebo GUI camera keeps the default mask
+    0xFFFFFFFF which includes bit 0, so the cylinder remains visible
+    to the human operator."""
+    center_z = ZONE_HEIGHT / 2.0
+    return f"""
+    <model name="{name}">
+      <static>true</static>
+      <pose>{wx} {wy} {center_z} 0 0 0</pose>
+      <link name="link">
+        <visual name="cylinder">
+          <visibility_flags>1</visibility_flags>
+          <transparency>{ZONE_TRANSPARENCY}</transparency>
+          <geometry>
+            <cylinder>
+              <radius>{ZONE_RADIUS}</radius>
+              <length>{ZONE_HEIGHT}</length>
+            </cylinder>
+          </geometry>
+          <material>
+            <ambient>{color}</ambient>
+            <diffuse>{color}</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>"""
 
 
 def sign_model_sdf(name, wx, wy, yaw_rad, sign_texture, wood_texture):
@@ -274,6 +311,22 @@ def main():
             tex_path, wood_texture)
         sdf_blocks.append(sdf)
         print(f"  [sign] id={sign_id} type={sign_type} yaw={yaw_deg}° @ ({wx:.2f}, {wy:.2f})")
+
+    # --- Zone cylinders (spawn + goal) ---
+    for idx, v in enumerate(vertices):
+        name = v[3] if len(v) >= 4 else ""
+        if not isinstance(name, str):
+            continue
+        if name.startswith("spawn"):
+            wx, wy = px_to_world(v[0], v[1], scale)
+            sdf = zone_model_sdf("zone_start", wx, wy, ZONE_START_COLOR, "START")
+            sdf_blocks.append(sdf)
+            print(f"  [zone] START @ ({wx:.2f}, {wy:.2f})")
+        elif name == "goal":
+            wx, wy = px_to_world(v[0], v[1], scale)
+            sdf = zone_model_sdf("zone_goal", wx, wy, ZONE_GOAL_COLOR, "GOAL")
+            sdf_blocks.append(sdf)
+            print(f"  [zone] GOAL @ ({wx:.2f}, {wy:.2f})")
 
     if not sdf_blocks:
         print("[markers_signs] No markers or signs found.")

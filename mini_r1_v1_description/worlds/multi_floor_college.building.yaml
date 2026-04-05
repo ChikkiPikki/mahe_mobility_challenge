@@ -121,6 +121,7 @@ levels:
       - [332.46300000000002, 710.70699999999999, 0, direction_1_forward_32]
       - [768.59000000000003, 720.36300000000006, 0, direction_2_right_50]
       - [778.24599999999998, 1417.202, 0, direction_4_rotate_180_clockwise_37]
+      - [763.49199999999996, 1953.277, 0, goal]
     walls:
       - [0, 1, {alpha: [3, 1], texture_height: [3, 2.5], texture_name: [1, beige], texture_scale: [3, 1], texture_width: [3, 1]}]
       - [1, 2, {alpha: [3, 1], texture_height: [3, 2.5], texture_name: [1, beige], texture_scale: [3, 1], texture_width: [3, 1]}]

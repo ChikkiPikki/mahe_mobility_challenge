@@ -19,9 +19,11 @@ def generate_launch_description():
         )
     )
 
-    # Compute spawn point in world coordinates from YAML (same logic as sim.launch.py)
+    # Compute spawn and goal points in world coordinates from YAML (same logic as sim.launch.py)
     spawn_x = 0.0
     spawn_y = 0.0
+    goal_x = 0.0
+    goal_y = 0.0
     try:
         yaml_path = os.path.join(description_package_share, 'worlds', 'multi_floor_college.building.yaml')
         with open(yaml_path) as f:
@@ -37,12 +39,16 @@ def generate_launch_description():
         distance_px = math.hypot(dx, dy)
         scale = distance_m / distance_px
         for v in data['levels']['floor_0']['vertices']:
-            if len(v) >= 4 and isinstance(v[3], str) and str(v[3]).startswith('spawn'):
-                spawn_x = v[0] * scale
-                spawn_y = -v[1] * scale
-                break
+            if len(v) >= 4 and isinstance(v[3], str):
+                label = str(v[3])
+                if label.startswith('spawn'):
+                    spawn_x = v[0] * scale
+                    spawn_y = -v[1] * scale
+                elif label == 'goal':
+                    goal_x = v[0] * scale
+                    goal_y = -v[1] * scale
     except Exception as e:
-        print(f'Warning: could not compute spawn offset: {e}')
+        print(f'Warning: could not compute spawn/goal offset: {e}')
 
     # 2. Standard tf2_ros mappings connecting Gazebo's implicitly generated namespaces back to our internal URDF labels
     tf_lidar = Node(
@@ -125,6 +131,20 @@ def generate_launch_description():
         ]
     )
 
+    # 6. Mission Zone Node: Start/Goal cylinders (RViz) + goal proximity check
+    mission_zone = Node(
+        package='mini_r1_v1_application',
+        executable='mission_zone_node.py',
+        name='mission_zone_node',
+        output='screen',
+        parameters=[{
+            'spawn_x': spawn_x,
+            'spawn_y': spawn_y,
+            'goal_x': goal_x,
+            'goal_y': goal_y,
+        }]
+    )
+
     return LaunchDescription([
         sim_launch,
         tf_lidar,
@@ -134,5 +154,6 @@ def generate_launch_description():
         lifecycle_manager,
         ekf_node,
         marker_detector,
+        mission_zone,
     ])
 

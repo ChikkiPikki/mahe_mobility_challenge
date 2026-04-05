@@ -101,7 +101,6 @@ class MarkerDetectorNode(Node):
             MarkerArray, '/mini_r1/mission_control/detected_objects', 10)
         self.viz_pub = self.create_publisher(
             MarkerArray, '/mini_r1/mission_control/viz_markers', 10)
-
         # Locked markers (first-detection only)
         self.locked_panel_markers = {}
         self.locked_viz_markers = {}
@@ -676,8 +675,6 @@ class MarkerDetectorNode(Node):
             panel_markers.markers.append(pm)
         for vm_list in self.locked_viz_signs.values():
             viz_markers.markers.extend(vm_list)
-        
-        # If no signs found but locked exist, we already republished them at start.
 
 def main(args=None):
     rclpy.init(args=args)

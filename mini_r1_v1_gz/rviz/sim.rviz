@@ -130,6 +130,10 @@ Visualization Manager:
         aruco_text: true
         sign: true
         sign_text: true
+        zone_start: true
+        zone_start_text: true
+        zone_goal: true
+        zone_goal_text: true
       Topic:
         Depth: 5
         Durability Policy: Volatile
