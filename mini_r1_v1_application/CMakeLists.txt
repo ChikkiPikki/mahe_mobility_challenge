@@ -54,6 +54,7 @@ install(FILES
 install(PROGRAMS
   scripts/marker_detector_node.py
   scripts/mission_zone_node.py
+  scripts/dynamic_obstacle_node.py
   DESTINATION lib/${PROJECT_NAME}
 )
 

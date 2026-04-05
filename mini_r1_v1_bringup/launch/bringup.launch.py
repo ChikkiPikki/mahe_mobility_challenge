@@ -145,6 +145,14 @@ def generate_launch_description():
         }]
     )
 
+    # 7. Dynamic Obstacle Node: moves obstacle models along waypoints
+    dynamic_obstacles = Node(
+        package='mini_r1_v1_application',
+        executable='dynamic_obstacle_node.py',
+        name='dynamic_obstacle_node',
+        output='screen',
+    )
+
     return LaunchDescription([
         sim_launch,
         tf_lidar,
@@ -155,5 +163,6 @@ def generate_launch_description():
         ekf_node,
         marker_detector,
         mission_zone,
+        dynamic_obstacles,
     ])
 
