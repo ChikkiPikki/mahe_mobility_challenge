@@ -1,0 +1,7 @@
+<library path="rviz_teleop_plugin">
+  <class name="mini_r1_v1_gz/TeleopPanel"
+         type="mini_r1_v1_gz::TeleopPanel"
+         base_class_type="rviz_common::Panel">
+    <description>A panel to control the robot with WASD.</description>
+  </class>
+</library>

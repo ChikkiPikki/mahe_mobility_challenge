@@ -1,0 +1,778 @@
+<sdf version="1.7">
+  <world name="sim_world">
+    <physics name="10ms" type="ode">
+      <max_step_size>0.01</max_step_size>
+      <real_time_factor>1.0</real_time_factor>
+    </physics>
+    <plugin filename="libgz-sim-sensors-system.so" name="gz::sim::systems::Sensors">
+      <render_engine>ogre2</render_engine>
+    </plugin>
+    <plugin filename="libgz-sim-imu-system.so" name="gz::sim::systems::Imu">
+    </plugin>
+    <plugin filename="libgz-sim-physics-system.so" name="gz::sim::systems::Physics">
+    </plugin>
+    <plugin filename="libgz-sim-user-commands-system.so" name="gz::sim::systems::UserCommands">
+    </plugin>
+    <plugin filename="libgz-sim-scene-broadcaster-system.so" name="gz::sim::systems::SceneBroadcaster">
+    </plugin>
+    <plugin filename="libdoor.so" name="door">
+    </plugin>
+    <plugin filename="liblift.so" name="lift">
+    </plugin>
+    <scene>
+      <ambient>1 1 1</ambient>
+      <background>0.8 0.8 0.8</background>
+      <grid>false</grid>
+    </scene>
+    <gui fullscreen="0">
+      <window>
+        <width>1000</width>
+        <height>845</height>
+        <style material_theme="Light" material_primary="DeepOrange" material_accent="LightBlue" toolbar_color_light="#f3f3f3" toolbar_text_color_light="#111111" toolbar_color_dark="#414141" toolbar_text_color_dark="#f3f3f3" plugin_toolbar_color_light="#bbdefb" plugin_toolbar_text_color_light="#111111" plugin_toolbar_color_dark="#607d8b" plugin_toolbar_text_color_dark="#eeeeee" />
+        <menus>
+          <drawer default="false">
+          </drawer>
+        </menus>
+      </window>
+      <plugin filename="MinimalScene" name="3D View">
+        <gz-gui>
+          <title>3D View</title>
+          <property type="bool" key="showTitleBar">false</property>
+          <property type="string" key="state">docked</property>
+        </gz-gui>
+        <engine>ogre2</engine>
+        <scene>scene</scene>
+        <ambient_light>0.4 0.4 0.4</ambient_light>
+        <background_color>0.8 0.8 0.8</background_color>
+        <camera_pose>7.715106867639217 -27.007056656811905 10 0 0.6 1.57</camera_pose>
+      </plugin>
+      <plugin filename="EntityContextMenuPlugin" name="Entity context menu">
+        <gz-gui>
+          <property key="state" type="string">floating</property>
+          <property key="width" type="double">5</property>
+          <property key="height" type="double">5</property>
+          <property key="showTitleBar" type="bool">false</property>
+        </gz-gui>
+      </plugin>
+      <plugin filename="GzSceneManager" name="Scene Manager">
+        <gz-gui>
+          <property key="resizable" type="bool">false</property>
+          <property key="width" type="double">5</property>
+          <property key="height" type="double">5</property>
+          <property key="state" type="string">floating</property>
+          <property key="showTitleBar" type="bool">false</property>
+        </gz-gui>
+      </plugin>
+      <plugin filename="InteractiveViewControl" name="Interactive view control">
+        <gz-gui>
+          <property key="resizable" type="bool">false</property>
+          <property key="width" type="double">5</property>
+          <property key="height" type="double">5</property>
+          <property key="state" type="string">floating</property>
+          <property key="showTitleBar" type="bool">false</property>
+        </gz-gui>
+      </plugin>
+      <plugin filename="CameraTracking" name="Camera Tracking">
+        <gz-gui>
+          <property key="resizable" type="bool">false</property>
+          <property key="width" type="double">5</property>
+          <property key="height" type="double">5</property>
+          <property key="state" type="string">floating</property>
+          <property key="showTitleBar" type="bool">false</property>
+        </gz-gui>
+      </plugin>
+      <plugin filename="MarkerManager" name="Marker manager">
+        <gz-gui>
+          <property key="resizable" type="bool">false</property>
+          <property key="width" type="double">5</property>
+          <property key="height" type="double">5</property>
+          <property key="state" type="string">floating</property>
+          <property key="showTitleBar" type="bool">false</property>
+        </gz-gui>
+      </plugin>
+      <plugin filename="SelectEntities" name="Select Entities">
+        <gz-gui>
+          <property key="resizable" type="bool">false</property>
+          <property key="width" type="double">5</property>
+          <property key="height" type="double">5</property>
+          <property key="state" type="string">floating</property>
+          <property key="showTitleBar" type="bool">false</property>
+        </gz-gui>
+      </plugin>
+      <plugin filename="Spawn" name="Spawn Entities">
+        <gz-gui>
+          <property key="resizable" type="bool">false</property>
+          <property key="width" type="double">5</property>
+          <property key="height" type="double">5</property>
+          <property key="state" type="string">floating</property>
+          <property key="showTitleBar" type="bool">false</property>
+        </gz-gui>
+      </plugin>
+      <plugin filename="VisualizationCapabilities" name="Visualization Capabilities">
+        <gz-gui>
+          <property key="resizable" type="bool">false</property>
+          <property key="width" type="double">5</property>
+          <property key="height" type="double">5</property>
+          <property key="state" type="string">floating</property>
+          <property key="showTitleBar" type="bool">false</property>
+        </gz-gui>
+      </plugin>
+      <plugin filename="WorldControl" name="World control">
+        <gz-gui>
+          <title>World control</title>
+          <property type="bool" key="showTitleBar">false</property>
+          <property type="bool" key="resizable">false</property>
+          <property type="double" key="height">72</property>
+          <property type="double" key="z">1</property>
+          <property type="string" key="state">floating</property>
+          <anchors target="3D View">
+            <line own="left" target="left" />
+            <line own="bottom" target="bottom" />
+          </anchors>
+        </gz-gui>
+        <play_pause>true</play_pause>
+        <step>true</step>
+        <start_paused>true</start_paused>
+        <use_event>true</use_event>
+      </plugin>
+      <plugin filename="WorldStats" name="World stats">
+        <gz-gui>
+          <title>World stats</title>
+          <property type="bool" key="showTitleBar">false</property>
+          <property type="bool" key="resizable">false</property>
+          <property type="double" key="height">110</property>
+          <property type="double" key="width">290</property>
+          <property type="double" key="z">1</property>
+          <property type="string" key="state">floating</property>
+          <anchors target="3D View">
+            <line own="right" target="right" />
+            <line own="bottom" target="bottom" />
+          </anchors>
+        </gz-gui>
+        <sim_time>true</sim_time>
+        <real_time>true</real_time>
+        <real_time_factor>true</real_time_factor>
+        <iterations>true</iterations>
+      </plugin>
+      <plugin filename="Shapes" name="Shapes">
+        <gz-gui>
+          <property key="resizable" type="bool">false</property>
+          <property key="x" type="double">0</property>
+          <property key="y" type="double">0</property>
+          <property key="width" type="double">250</property>
+          <property key="height" type="double">50</property>
+          <property key="state" type="string">floating</property>
+          <property key="showTitleBar" type="bool">false</property>
+          <property key="cardBackground" type="string">#666666</property>
+        </gz-gui>
+      </plugin>
+      <plugin filename="Lights" name="Lights">
+        <gz-gui>
+          <property key="resizable" type="bool">false</property>
+          <property key="x" type="double">250</property>
+          <property key="y" type="double">0</property>
+          <property key="width" type="double">150</property>
+          <property key="height" type="double">50</property>
+          <property key="state" type="string">floating</property>
+          <property key="showTitleBar" type="bool">false</property>
+          <property key="cardBackground" type="string">#666666</property>
+        </gz-gui>
+      </plugin>
+      <plugin filename="TransformControl" name="Transform control">
+        <gz-gui>
+          <property key="resizable" type="bool">false</property>
+          <property key="x" type="double">0</property>
+          <property key="y" type="double">50</property>
+          <property key="width" type="double">250</property>
+          <property key="height" type="double">50</property>
+          <property key="state" type="string">floating</property>
+          <property key="showTitleBar" type="bool">false</property>
+          <property key="cardBackground" type="string">#777777</property>
+        </gz-gui>
+      </plugin>
+      <plugin filename="Screenshot" name="Screenshot">
+        <gz-gui>
+          <property key="resizable" type="bool">false</property>
+          <property key="x" type="double">250</property>
+          <property key="y" type="double">50</property>
+          <property key="width" type="double">50</property>
+          <property key="height" type="double">50</property>
+          <property key="state" type="string">floating</property>
+          <property key="showTitleBar" type="bool">false</property>
+          <property key="cardBackground" type="string">#777777</property>
+        </gz-gui>
+      </plugin>
+      <plugin filename="CopyPaste" name="CopyPaste">
+        <gz-gui>
+          <property key="resizable" type="bool">false</property>
+          <property key="x" type="double">300</property>
+          <property key="y" type="double">50</property>
+          <property key="width" type="double">100</property>
+          <property key="height" type="double">50</property>
+          <property key="state" type="string">floating</property>
+          <property key="showTitleBar" type="bool">false</property>
+          <property key="cardBackground" type="string">#777777</property>
+        </gz-gui>
+      </plugin>
+      <plugin filename="ComponentInspector" name="Component inspector">
+        <gz-gui>
+          <property type="bool" key="showTitleBar">false</property>
+          <property type="string" key="state">docked</property>
+        </gz-gui>
+      </plugin>
+      <plugin filename="EntityTree" name="Entity tree">
+        <gz-gui>
+          <property type="bool" key="showTitleBar">false</property>
+          <property type="string" key="state">docked</property>
+        </gz-gui>
+      </plugin>
+      <plugin filename="toggle_charging" name="toggle_charging" />
+      <plugin name="toggle_floors" filename="toggle_floors">
+        <floor name="floor_0" model_name="multi_floor_college_floor_0">
+          <model name="OpenRobotics/Chair" />
+          <model name="OpenRobotics/Chair_2" />
+          <model name="OpenRobotics/Chair_3" />
+          <model name="OpenRobotics/Chair_4" />
+          <model name="OpenRobotics/Chair_5" />
+          <model name="OpenRobotics/MaleVisitorOnPhone" />
+          <model name="OpenRobotics/MaleVisitorOnPhone_2" />
+          <model name="OpenRobotics/MaleVisitorOnPhone_3" />
+          <model name="OpenRobotics/Sofa" />
+          <model name="OpenRobotics/Sofa_2" />
+          <model name="OpenRobotics/VendingMachine" />
+          <model name="OpenRobotics/OfficeChairBlue" />
+          <model name="OpenRobotics/OfficeChairBlue_2" />
+          <model name="OpenRobotics/OfficeChairBlue_3" />
+          <model name="OpenRobotics/OfficeChairBlue_4" />
+          <model name="OpenRobotics/Toilet" />
+          <model name="OpenRobotics/Toilet_2" />
+          <model name="OpenRobotics/Toilet_3" />
+          <model name="OpenRobotics/Toilet_4" />
+          <model name="OpenRobotics/Table" />
+          <model name="OpenRobotics/Table_2" />
+          <model name="OpenRobotics/Table_3" />
+          <model name="OpenRobotics/Pine Tree" />
+          <model name="OpenRobotics/Pine Tree_2" />
+          <model name="OpenRobotics/Pine Tree_3" />
+          <model name="OpenRobotics/Pine Tree_4" />
+          <model name="OpenRobotics/Cafe table" />
+          <model name="OpenRobotics/BigCubicle" />
+          <model name="OpenRobotics/DigitalKiosk" />
+        </floor>
+      </plugin>
+    </gui>
+    <light type="directional" name="sun">
+      <cast_shadows>true</cast_shadows>
+      <pose>0 0 10 0 0 0</pose>
+      <diffuse>1 1 1 1</diffuse>
+      <specular>0.2 0.2 0.2 1</specular>
+      <attenuation>
+        <range>1000</range>
+        <constant>0.09</constant>
+        <linear>0.001</linear>
+        <quadratic>0.001</quadratic>
+      </attenuation>
+      <direction>-0.5 0.1 -0.9</direction>
+    </light>
+    <include>
+      <name>OpenRobotics/Chair</name>
+      <uri>model://Chair</uri>
+      <pose>11.415431590171085 -11.034517520476905 0.0 0 0 1.5708</pose>
+      <static>True</static>
+    </include>
+    <include>
+      <name>OpenRobotics/Chair_2</name>
+      <uri>model://Chair</uri>
+      <pose>5.4675229002084045 -11.051800513740126 0.0 0 0 1.5708</pose>
+      <static>True</static>
+    </include>
+    <include>
+      <name>OpenRobotics/Chair_3</name>
+      <uri>model://Chair</uri>
+      <pose>5.428468957495275 -5.915988949740706 0.0 0 0 1.5708</pose>
+      <static>True</static>
+    </include>
+    <include>
+      <name>OpenRobotics/Chair_4</name>
+      <uri>model://Chair</uri>
+      <pose>11.521145737410944 -5.955042892453836 0.0 0 0 1.5708</pose>
+      <static>True</static>
+    </include>
+    <include>
+      <name>OpenRobotics/Chair_5</name>
+      <uri>model://Chair</uri>
+      <pose>10.867164251441865 -13.893617021276595 0.0 0 0 1.5708</pose>
+      <static>True</static>
+    </include>
+    <include>
+      <name>OpenRobotics/MaleVisitorOnPhone</name>
+      <uri>model://MaleVisitorOnPhone</uri>
+      <pose>11.072010856395094 -5.427790432801822 0.0 0 0 1.5708</pose>
+      <static>True</static>
+    </include>
+    <include>
+      <name>OpenRobotics/MaleVisitorOnPhone_2</name>
+      <uri>model://MaleVisitorOnPhone</uri>
+      <pose>7.185973925265351 -8.55224155479087 0.0 0 0 1.5708</pose>
+      <static>True</static>
+    </include>
+    <include>
+      <name>OpenRobotics/MaleVisitorOnPhone_3</name>
+      <uri>model://MaleVisitorOnPhone</uri>
+      <pose>8.299054912034121 -11.500945087965878 0.0 0 0 1.5708</pose>
+      <static>True</static>
+    </include>
+    <include>
+      <name>OpenRobotics/Sofa</name>
+      <uri>model://Sofa</uri>
+      <pose>4.388610478359909 -13.610332961760285 0.0 0 0 1.5708</pose>
+      <static>True</static>
+    </include>
+    <include>
+      <name>OpenRobotics/Sofa_2</name>
+      <uri>model://Sofa</uri>
+      <pose>13.358212572093247 -13.706121262055929 0.0 0 0 1.5708</pose>
+      <static>True</static>
+    </include>
+    <include>
+      <name>OpenRobotics/VendingMachine</name>
+      <uri>model://VendingMachine</uri>
+      <pose>1.979818736974749 -13.7996995104929 0.0 0 0 1.5708</pose>
+      <static>True</static>
+    </include>
+    <include>
+      <name>OpenRobotics/OfficeChairBlue</name>
+      <uri>model://OfficeChairBlue</uri>
+      <pose>5.5303639800319875 -9.981718606116415 0.0 0 0 1.5708</pose>
+      <static>True</static>
+    </include>
+    <include>
+      <name>OpenRobotics/OfficeChairBlue_2</name>
+      <uri>model://OfficeChairBlue</uri>
+      <pose>5.538816459070421 -9.077788009499345 0.0 0 0 1.5708</pose>
+      <static>True</static>
+    </include>
+    <include>
+      <name>OpenRobotics/OfficeChairBlue_3</name>
+      <uri>model://OfficeChairBlue</uri>
+      <pose>11.443076624824311 -9.972742693743033 0.0 0 0 1.5708</pose>
+      <static>True</static>
+    </include>
+    <include>
+      <name>OpenRobotics/OfficeChairBlue_4</name>
+      <uri>model://OfficeChairBlue</uri>
+      <pose>11.385256627732273 -9.192138806765861 0.0 0 0 1.5708</pose>
+      <static>True</static>
+    </include>
+    <include>
+      <name>OpenRobotics/Toilet</name>
+      <uri>model://Toilet</uri>
+      <pose>2.5755246449861873 -18.602064653710077 0.0 0 0 1.5708</pose>
+      <static>True</static>
+    </include>
+    <include>
+      <name>OpenRobotics/Toilet_2</name>
+      <uri>model://Toilet</uri>
+      <pose>3.4561139921485 -18.590772064169048 0.0 0 0 1.5708</pose>
+      <static>True</static>
+    </include>
+    <include>
+      <name>OpenRobotics/Toilet_3</name>
+      <uri>model://Toilet</uri>
+      <pose>12.436116900111472 -18.57272330732322 0.0 0 0 1.5708</pose>
+      <static>True</static>
+    </include>
+    <include>
+      <name>OpenRobotics/Toilet_4</name>
+      <uri>model://Toilet</uri>
+      <pose>13.371472883245287 -18.58830998885281 0.0 0 0 1.5708</pose>
+      <static>True</static>
+    </include>
+    <include>
+      <name>OpenRobotics/Table</name>
+      <uri>model://Table</uri>
+      <pose>6.440643629137789 -10.179896282654001 0.0 0 0 1.5708</pose>
+      <static>True</static>
+    </include>
+    <include>
+      <name>OpenRobotics/Table_2</name>
+      <uri>model://Table</uri>
+      <pose>6.385537730819561 -4.3017883972277415 0.0 0 0 1.5708</pose>
+      <static>True</static>
+    </include>
+    <include>
+      <name>OpenRobotics/Table_3</name>
+      <uri>model://Table</uri>
+      <pose>12.428963311200503 -10.10642175156303 0.0 0 0 1.5708</pose>
+      <static>True</static>
+    </include>
+    <include>
+      <name>OpenRobotics/Pine Tree</name>
+      <uri>model://Pine Tree</uri>
+      <pose>8.053991179178984 -17.21848495129162 0.0 0 0 1.5708</pose>
+      <static>True</static>
+    </include>
+    <include>
+      <name>OpenRobotics/Pine Tree_2</name>
+      <uri>model://Pine Tree</uri>
+      <pose>0.42267241797121113 -16.497116270052828 0.0 0 0 1.5708</pose>
+      <static>True</static>
+    </include>
+    <include>
+      <name>OpenRobotics/Pine Tree_3</name>
+      <uri>model://Pine Tree</uri>
+      <pose>14.587631464159356 -20.925061794213153 0.0 0 0 1.5708</pose>
+      <static>True</static>
+    </include>
+    <include>
+      <name>OpenRobotics/Pine Tree_4</name>
+      <uri>model://Pine Tree</uri>
+      <pose>11.715446129985946 -20.945572626375224 0.0 0 0 1.5708</pose>
+      <static>True</static>
+    </include>
+    <include>
+      <name>OpenRobotics/Cafe table</name>
+      <uri>model://Cafe table</uri>
+      <pose>4.480182232346241 -3.875374400232637 0.0 0 0 1.5708</pose>
+      <static>True</static>
+    </include>
+    <include>
+      <name>OpenRobotics/BigCubicle</name>
+      <uri>model://BigCubicle</uri>
+      <pose>11.429884166141617 -3.2004265012358846 0.0 0 0 1.5708</pose>
+      <static>True</static>
+    </include>
+    <include>
+      <name>OpenRobotics/DigitalKiosk</name>
+      <uri>model://DigitalKiosk</uri>
+      <pose>9.16423205544516 -13.987253428973004 0.0 0 0 1.5708</pose>
+      <static>True</static>
+    </include>
+    <include>
+      <name>multi_floor_college_floor_0</name>
+      <uri>model://multi_floor_college_floor_0</uri>
+      <pose>0 0 0.0 0 0 0</pose>
+    </include>
+    <rmf_charger_waypoints name="charger_waypoints" />
+  
+    <model name="aruco_0_v52">
+      <static>true</static>
+      <pose>13.985886686376194 -4.432520719236175 0.25 0 0 0.0</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry><box><size>0.5 0.5 0.5</size></box></geometry>
+          <material>
+            <ambient>0.9 0.6 0.1 1</ambient>
+            <diffuse>0.9 0.6 0.1 1</diffuse>
+            <pbr>
+              <metal>
+                <albedo_map>/home/tanay/ros2_ws/src/mini_r1_v1_description/worlds/generated/aruco_0.png</albedo_map>
+              </metal>
+            </pbr>
+          </material>
+        </visual>
+        <collision name="collision">
+          <geometry><box><size>0.5 0.5 0.5</size></box></geometry>
+        </collision>
+      </link>
+    </model>
+
+    <model name="aruco_2_v53">
+      <static>true</static>
+      <pose>6.31611496146949 -12.573014103620414 0.25 0 0 0.6981317007977318</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry><box><size>0.5 0.5 0.5</size></box></geometry>
+          <material>
+            <ambient>0.9 0.6 0.1 1</ambient>
+            <diffuse>0.9 0.6 0.1 1</diffuse>
+            <pbr>
+              <metal>
+                <albedo_map>/home/tanay/ros2_ws/src/mini_r1_v1_description/worlds/generated/aruco_2.png</albedo_map>
+              </metal>
+            </pbr>
+          </material>
+        </visual>
+        <collision name="collision">
+          <geometry><box><size>0.5 0.5 0.5</size></box></geometry>
+        </collision>
+      </link>
+    </model>
+
+    <model name="aruco_3_v54">
+      <static>true</static>
+      <pose>1.9828236320457517 -7.367527746813357 0.25 0 0 1.0471975511965976</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry><box><size>0.5 0.5 0.5</size></box></geometry>
+          <material>
+            <ambient>0.9 0.6 0.1 1</ambient>
+            <diffuse>0.9 0.6 0.1 1</diffuse>
+            <pbr>
+              <metal>
+                <albedo_map>/home/tanay/ros2_ws/src/mini_r1_v1_description/worlds/generated/aruco_3.png</albedo_map>
+              </metal>
+            </pbr>
+          </material>
+        </visual>
+        <collision name="collision">
+          <geometry><box><size>0.5 0.5 0.5</size></box></geometry>
+        </collision>
+      </link>
+    </model>
+
+    <model name="aruco_1_v55">
+      <static>true</static>
+      <pose>9.99871080308244 -12.337653273881646 0.25 0 0 0.3490658503988659</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry><box><size>0.5 0.5 0.5</size></box></geometry>
+          <material>
+            <ambient>0.9 0.6 0.1 1</ambient>
+            <diffuse>0.9 0.6 0.1 1</diffuse>
+            <pbr>
+              <metal>
+                <albedo_map>/home/tanay/ros2_ws/src/mini_r1_v1_description/worlds/generated/aruco_1.png</albedo_map>
+              </metal>
+            </pbr>
+          </material>
+        </visual>
+        <collision name="collision">
+          <geometry><box><size>0.5 0.5 0.5</size></box></geometry>
+        </collision>
+      </link>
+    </model>
+
+    <model name="aruco_4_v56">
+      <static>true</static>
+      <pose>7.403130906799786 -1.9563320893713951 0.25 0 0 0.7853981633974483</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry><box><size>0.5 0.5 0.5</size></box></geometry>
+          <material>
+            <ambient>0.9 0.6 0.1 1</ambient>
+            <diffuse>0.9 0.6 0.1 1</diffuse>
+            <pbr>
+              <metal>
+                <albedo_map>/home/tanay/ros2_ws/src/mini_r1_v1_description/worlds/generated/aruco_4.png</albedo_map>
+              </metal>
+            </pbr>
+          </material>
+        </visual>
+        <collision name="collision">
+          <geometry><box><size>0.5 0.5 0.5</size></box></geometry>
+        </collision>
+      </link>
+    </model>
+
+    <model name="sign_3_rotate_180_clockwise_v57">
+      <static>true</static>
+      <pose>7.639528909998545 -9.798613870983376 0 0 0 0.8203047484373349</pose>
+      <link name="link">
+        <!-- Pole -->
+        <visual name="pole">
+          <pose>0 0 0.075 0 0 0</pose>
+          <geometry><cylinder><radius>0.015</radius><length>0.15</length></cylinder></geometry>
+          <material>
+            <ambient>0.8 0.8 0.8 1</ambient><diffuse>0.8 0.8 0.8 1</diffuse>
+            <pbr><metal><albedo_map>file:///home/tanay/ros2_ws/src/mini_r1_v1_description/worlds/wood_texture.jpg</albedo_map></metal></pbr>
+          </material>
+        </visual>
+        <collision name="pole_col">
+          <pose>0 0 0.075 0 0 0</pose>
+          <geometry><cylinder><radius>0.015</radius><length>0.15</length></cylinder></geometry>
+        </collision>
+        <!-- Sign panel -->
+        <visual name="panel">
+          <pose>0 0 0.3 0 0 0</pose>
+          <geometry><box><size>0.015 0.3 0.3</size></box></geometry>
+          <material>
+            <ambient>0.8 0.8 0.8 1</ambient><diffuse>0.8 0.8 0.8 1</diffuse>
+            <pbr><metal><albedo_map>file:///home/tanay/ros2_ws/src/mini_r1_v1_description/worlds/wood_texture.jpg</albedo_map></metal></pbr>
+          </material>
+        </visual>
+        <!-- Sign face (front) -->
+        <visual name="sign_front">
+          <pose>0.0085 0 0.3 0 0 0</pose>
+          <geometry><box><size>0.001 0.3 0.3</size></box></geometry>
+          <material>
+            <ambient>1 1 1 1</ambient><diffuse>1 1 1 1</diffuse>
+            <pbr><metal><albedo_map>file:///home/tanay/ros2_ws/src/mini_r1_v1_description/worlds/generated/sign_3_rotate_180_clockwise.png</albedo_map></metal></pbr>
+          </material>
+        </visual>
+        <collision name="panel_col">
+          <pose>0 0 0.3 0 0 0</pose>
+          <geometry><box><size>0.015 0.3 0.3</size></box></geometry>
+        </collision>
+      </link>
+    </model>
+
+    <model name="sign_0_left_v58">
+      <static>true</static>
+      <pose>1.8498715649687394 -2.8955459700479813 0 0 0 0.0</pose>
+      <link name="link">
+        <!-- Pole -->
+        <visual name="pole">
+          <pose>0 0 0.075 0 0 0</pose>
+          <geometry><cylinder><radius>0.015</radius><length>0.15</length></cylinder></geometry>
+          <material>
+            <ambient>0.8 0.8 0.8 1</ambient><diffuse>0.8 0.8 0.8 1</diffuse>
+            <pbr><metal><albedo_map>file:///home/tanay/ros2_ws/src/mini_r1_v1_description/worlds/wood_texture.jpg</albedo_map></metal></pbr>
+          </material>
+        </visual>
+        <collision name="pole_col">
+          <pose>0 0 0.075 0 0 0</pose>
+          <geometry><cylinder><radius>0.015</radius><length>0.15</length></cylinder></geometry>
+        </collision>
+        <!-- Sign panel -->
+        <visual name="panel">
+          <pose>0 0 0.3 0 0 0</pose>
+          <geometry><box><size>0.015 0.3 0.3</size></box></geometry>
+          <material>
+            <ambient>0.8 0.8 0.8 1</ambient><diffuse>0.8 0.8 0.8 1</diffuse>
+            <pbr><metal><albedo_map>file:///home/tanay/ros2_ws/src/mini_r1_v1_description/worlds/wood_texture.jpg</albedo_map></metal></pbr>
+          </material>
+        </visual>
+        <!-- Sign face (front) -->
+        <visual name="sign_front">
+          <pose>0.0085 0 0.3 0 0 0</pose>
+          <geometry><box><size>0.001 0.3 0.3</size></box></geometry>
+          <material>
+            <ambient>1 1 1 1</ambient><diffuse>1 1 1 1</diffuse>
+            <pbr><metal><albedo_map>file:///home/tanay/ros2_ws/src/mini_r1_v1_description/worlds/generated/sign_0_left.png</albedo_map></metal></pbr>
+          </material>
+        </visual>
+        <collision name="panel_col">
+          <pose>0 0 0.3 0 0 0</pose>
+          <geometry><box><size>0.015 0.3 0.3</size></box></geometry>
+        </collision>
+      </link>
+    </model>
+
+    <model name="sign_1_forward_v59">
+      <static>true</static>
+      <pose>3.2226336451315856 -6.889032132990839 0 0 0 0.5585053606381855</pose>
+      <link name="link">
+        <!-- Pole -->
+        <visual name="pole">
+          <pose>0 0 0.075 0 0 0</pose>
+          <geometry><cylinder><radius>0.015</radius><length>0.15</length></cylinder></geometry>
+          <material>
+            <ambient>0.8 0.8 0.8 1</ambient><diffuse>0.8 0.8 0.8 1</diffuse>
+            <pbr><metal><albedo_map>file:///home/tanay/ros2_ws/src/mini_r1_v1_description/worlds/wood_texture.jpg</albedo_map></metal></pbr>
+          </material>
+        </visual>
+        <collision name="pole_col">
+          <pose>0 0 0.075 0 0 0</pose>
+          <geometry><cylinder><radius>0.015</radius><length>0.15</length></cylinder></geometry>
+        </collision>
+        <!-- Sign panel -->
+        <visual name="panel">
+          <pose>0 0 0.3 0 0 0</pose>
+          <geometry><box><size>0.015 0.3 0.3</size></box></geometry>
+          <material>
+            <ambient>0.8 0.8 0.8 1</ambient><diffuse>0.8 0.8 0.8 1</diffuse>
+            <pbr><metal><albedo_map>file:///home/tanay/ros2_ws/src/mini_r1_v1_description/worlds/wood_texture.jpg</albedo_map></metal></pbr>
+          </material>
+        </visual>
+        <!-- Sign face (front) -->
+        <visual name="sign_front">
+          <pose>0.0085 0 0.3 0 0 0</pose>
+          <geometry><box><size>0.001 0.3 0.3</size></box></geometry>
+          <material>
+            <ambient>1 1 1 1</ambient><diffuse>1 1 1 1</diffuse>
+            <pbr><metal><albedo_map>file:///home/tanay/ros2_ws/src/mini_r1_v1_description/worlds/generated/sign_1_forward.png</albedo_map></metal></pbr>
+          </material>
+        </visual>
+        <collision name="panel_col">
+          <pose>0 0 0.3 0 0 0</pose>
+          <geometry><box><size>0.015 0.3 0.3</size></box></geometry>
+        </collision>
+      </link>
+    </model>
+
+    <model name="sign_2_right_v60">
+      <static>true</static>
+      <pose>7.450104202006495 -6.982629767847623 0 0 0 0.8726646259971648</pose>
+      <link name="link">
+        <!-- Pole -->
+        <visual name="pole">
+          <pose>0 0 0.075 0 0 0</pose>
+          <geometry><cylinder><radius>0.015</radius><length>0.15</length></cylinder></geometry>
+          <material>
+            <ambient>0.8 0.8 0.8 1</ambient><diffuse>0.8 0.8 0.8 1</diffuse>
+            <pbr><metal><albedo_map>file:///home/tanay/ros2_ws/src/mini_r1_v1_description/worlds/wood_texture.jpg</albedo_map></metal></pbr>
+          </material>
+        </visual>
+        <collision name="pole_col">
+          <pose>0 0 0.075 0 0 0</pose>
+          <geometry><cylinder><radius>0.015</radius><length>0.15</length></cylinder></geometry>
+        </collision>
+        <!-- Sign panel -->
+        <visual name="panel">
+          <pose>0 0 0.3 0 0 0</pose>
+          <geometry><box><size>0.015 0.3 0.3</size></box></geometry>
+          <material>
+            <ambient>0.8 0.8 0.8 1</ambient><diffuse>0.8 0.8 0.8 1</diffuse>
+            <pbr><metal><albedo_map>file:///home/tanay/ros2_ws/src/mini_r1_v1_description/worlds/wood_texture.jpg</albedo_map></metal></pbr>
+          </material>
+        </visual>
+        <!-- Sign face (front) -->
+        <visual name="sign_front">
+          <pose>0.0085 0 0.3 0 0 0</pose>
+          <geometry><box><size>0.001 0.3 0.3</size></box></geometry>
+          <material>
+            <ambient>1 1 1 1</ambient><diffuse>1 1 1 1</diffuse>
+            <pbr><metal><albedo_map>file:///home/tanay/ros2_ws/src/mini_r1_v1_description/worlds/generated/sign_2_right.png</albedo_map></metal></pbr>
+          </material>
+        </visual>
+        <collision name="panel_col">
+          <pose>0 0 0.3 0 0 0</pose>
+          <geometry><box><size>0.015 0.3 0.3</size></box></geometry>
+        </collision>
+      </link>
+    </model>
+
+    <model name="sign_4_rotate_180_clockwise_v61">
+      <static>true</static>
+      <pose>7.543701836863277 -13.737236465855668 0 0 0 0.6457718232379019</pose>
+      <link name="link">
+        <!-- Pole -->
+        <visual name="pole">
+          <pose>0 0 0.075 0 0 0</pose>
+          <geometry><cylinder><radius>0.015</radius><length>0.15</length></cylinder></geometry>
+          <material>
+            <ambient>0.8 0.8 0.8 1</ambient><diffuse>0.8 0.8 0.8 1</diffuse>
+            <pbr><metal><albedo_map>file:///home/tanay/ros2_ws/src/mini_r1_v1_description/worlds/wood_texture.jpg</albedo_map></metal></pbr>
+          </material>
+        </visual>
+        <collision name="pole_col">
+          <pose>0 0 0.075 0 0 0</pose>
+          <geometry><cylinder><radius>0.015</radius><length>0.15</length></cylinder></geometry>
+        </collision>
+        <!-- Sign panel -->
+        <visual name="panel">
+          <pose>0 0 0.3 0 0 0</pose>
+          <geometry><box><size>0.015 0.3 0.3</size></box></geometry>
+          <material>
+            <ambient>0.8 0.8 0.8 1</ambient><diffuse>0.8 0.8 0.8 1</diffuse>
+            <pbr><metal><albedo_map>file:///home/tanay/ros2_ws/src/mini_r1_v1_description/worlds/wood_texture.jpg</albedo_map></metal></pbr>
+          </material>
+        </visual>
+        <!-- Sign face (front) -->
+        <visual name="sign_front">
+          <pose>0.0085 0 0.3 0 0 0</pose>
+          <geometry><box><size>0.001 0.3 0.3</size></box></geometry>
+          <material>
+            <ambient>1 1 1 1</ambient><diffuse>1 1 1 1</diffuse>
+            <pbr><metal><albedo_map>file:///home/tanay/ros2_ws/src/mini_r1_v1_description/worlds/generated/sign_4_rotate_180_clockwise.png</albedo_map></metal></pbr>
+          </material>
+        </visual>
+        <collision name="panel_col">
+          <pose>0 0 0.3 0 0 0</pose>
+          <geometry><box><size>0.015 0.3 0.3</size></box></geometry>
+        </collision>
+      </link>
+    </model>
+  </world>
+</sdf>

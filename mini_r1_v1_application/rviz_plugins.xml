@@ -1,0 +1,9 @@
+<library path="mission_control_panel">
+  <class name="mini_r1_v1_application/MissionControlPanel"
+         type="mini_r1_v1_application::MissionControlPanel"
+         base_class_type="rviz_common::Panel">
+    <description>
+      A Mission Control panel to track detected ArUco markers and Signs.
+    </description>
+  </class>
+</library>
