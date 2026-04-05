@@ -1,0 +1,37 @@
+marker_detector_node:
+  ros__parameters:
+    # ── General ──────────────────────────────────
+    max_marker_dist: 3.5          # max depth (metres) to accept any detection
+    min_marker_area_px: 200       # minimum pixel area for ArUco contour
+    max_aruco_id: 10              # discard IDs above this
+
+    # ── ArUco marker physical size ───────────────
+    aruco_marker_length: 0.5      # metres (side length of the printed marker)
+    aruco_box_size: 0.5           # metres (side length of the Gazebo cube)
+
+    # ── Arrow / Sign Detection ───────────────────
+    # Preprocessing
+    sign_border_crop: 20          # px to crop from each edge before processing
+    sign_blur_kernel: 5           # GaussianBlur kernel size (must be odd)
+    sign_blur_sigma: 1            # blur strength
+    sign_canny_low: 50            # Canny lower threshold
+    sign_canny_high: 50           # Canny upper threshold
+    sign_dilate_iter: 2           # dilation iterations
+    sign_erode_iter: 1            # erosion iterations
+
+    # Contour filtering
+    sign_min_area: 5000           # minimum contour area (px²)
+
+    # Straight arrow
+    sign_approx_epsilon: 0.015    # approxPolyDP epsilon factor
+    sign_hull_min_sides: 4        # exclusive lower bound for hull sides
+    sign_hull_max_sides: 6        # exclusive upper bound for hull sides
+
+    # Curved arrow
+    sign_curved_max_convexity: 0.6    # max area/hull_area ratio
+    sign_curved_tip_max_angle: 60.0   # max tip angle (degrees)
+
+    # Sign panel physical size (matching Gazebo model)
+    sign_panel_width: 0.3         # metres
+    sign_panel_height: 0.3        # metres
+    sign_panel_thickness: 0.015   # metres

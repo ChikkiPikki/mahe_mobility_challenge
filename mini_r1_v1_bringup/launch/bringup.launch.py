@@ -107,16 +107,22 @@ def generate_launch_description():
         parameters=[ekf_params],
     )
 
-    # 5. Application Node: Marker Detector (with spawn offset for world coords)
+    # 5. Application Node: Marker Detector (with config + spawn offset)
+    app_package_share = get_package_share_directory('mini_r1_v1_application')
+    marker_detector_config = os.path.join(app_package_share, 'config', 'marker_detector.yaml')
+
     marker_detector = Node(
         package='mini_r1_v1_application',
         executable='marker_detector_node.py',
         name='marker_detector_node',
         output='screen',
-        parameters=[{
-            'spawn_x': spawn_x,
-            'spawn_y': spawn_y,
-        }]
+        parameters=[
+            marker_detector_config,
+            {
+                'spawn_x': spawn_x,
+                'spawn_y': spawn_y,
+            }
+        ]
     )
 
     return LaunchDescription([

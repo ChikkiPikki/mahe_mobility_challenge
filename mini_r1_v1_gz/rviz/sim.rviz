@@ -128,6 +128,8 @@ Visualization Manager:
       Namespaces:
         aruco: true
         aruco_text: true
+        sign: true
+        sign_text: true
       Topic:
         Depth: 5
         Durability Policy: Volatile
