@@ -44,7 +44,7 @@
         <scene>scene</scene>
         <ambient_light>0.4 0.4 0.4</ambient_light>
         <background_color>0.8 0.8 0.8</background_color>
-        <camera_pose>7.715106867639217 -27.007056656811905 10 0 0.6 1.57</camera_pose>
+        <camera_pose>7.036968851021879 -29.946428470875343 10 0 0.6 1.57</camera_pose>
       </plugin>
       <plugin filename="EntityContextMenuPlugin" name="Entity context menu">
         <gz-gui>
@@ -228,36 +228,29 @@
       </plugin>
       <plugin filename="toggle_charging" name="toggle_charging" />
       <plugin name="toggle_floors" filename="toggle_floors">
-        <floor name="floor_0" model_name="multi_floor_college_floor_0">
+        <floor name="ground" model_name="multi_floor_college_ground">
+          <model name="OpenRobotics/Bookshelf" />
+          <model name="OpenRobotics/Sofa" />
+          <model name="OpenRobotics/Sofa_2" />
+          <model name="OpenRobotics/Sofa_3" />
+          <model name="OpenRobotics/Cafe table" />
+          <model name="OpenRobotics/Cafe table_2" />
+          <model name="OpenRobotics/FemaleVisitor" />
+          <model name="OpenRobotics/TrashBin" />
+          <model name="OpenRobotics/VendingMachine" />
+          <model name="OpenRobotics/VendingMachine_2" />
+          <model name="OpenRobotics/VendingMachine_3" />
+          <model name="OpenRobotics/DigitalKiosk" />
           <model name="OpenRobotics/Chair" />
           <model name="OpenRobotics/Chair_2" />
           <model name="OpenRobotics/Chair_3" />
-          <model name="OpenRobotics/Chair_4" />
-          <model name="OpenRobotics/Chair_5" />
-          <model name="OpenRobotics/MaleVisitorOnPhone" />
-          <model name="OpenRobotics/MaleVisitorOnPhone_2" />
-          <model name="OpenRobotics/MaleVisitorOnPhone_3" />
-          <model name="OpenRobotics/Sofa" />
-          <model name="OpenRobotics/Sofa_2" />
-          <model name="OpenRobotics/VendingMachine" />
-          <model name="OpenRobotics/OfficeChairBlue" />
-          <model name="OpenRobotics/OfficeChairBlue_2" />
-          <model name="OpenRobotics/OfficeChairBlue_3" />
-          <model name="OpenRobotics/OfficeChairBlue_4" />
-          <model name="OpenRobotics/Toilet" />
-          <model name="OpenRobotics/Toilet_2" />
-          <model name="OpenRobotics/Toilet_3" />
-          <model name="OpenRobotics/Toilet_4" />
-          <model name="OpenRobotics/Table" />
-          <model name="OpenRobotics/Table_2" />
-          <model name="OpenRobotics/Table_3" />
-          <model name="OpenRobotics/Pine Tree" />
-          <model name="OpenRobotics/Pine Tree_2" />
-          <model name="OpenRobotics/Pine Tree_3" />
-          <model name="OpenRobotics/Pine Tree_4" />
-          <model name="OpenRobotics/Cafe table" />
-          <model name="OpenRobotics/BigCubicle" />
-          <model name="OpenRobotics/DigitalKiosk" />
+          <model name="OpenRobotics/WoodenChair" />
+          <model name="OpenRobotics/WoodenChair_2" />
+          <model name="OpenRobotics/MopCart1_Dynamic_Obstacle" />
+          <model name="OpenRobotics/OfficeChairGrey" />
+          <model name="OpenRobotics/OfficeChairGrey_2" />
+          <model name="OpenRobotics/StorageRack" />
+          <model name="OpenRobotics/StorageRack_2" />
         </floor>
       </plugin>
     </gui>
@@ -275,189 +268,147 @@
       <direction>-0.5 0.1 -0.9</direction>
     </light>
     <include>
-      <name>OpenRobotics/Chair</name>
-      <uri>model://Chair</uri>
-      <pose>11.415431590171085 -11.034517520476905 0.0 0 0 1.5708</pose>
-      <static>True</static>
-    </include>
-    <include>
-      <name>OpenRobotics/Chair_2</name>
-      <uri>model://Chair</uri>
-      <pose>5.4675229002084045 -11.051800513740126 0.0 0 0 1.5708</pose>
-      <static>True</static>
-    </include>
-    <include>
-      <name>OpenRobotics/Chair_3</name>
-      <uri>model://Chair</uri>
-      <pose>5.428468957495275 -5.915988949740706 0.0 0 0 1.5708</pose>
-      <static>True</static>
-    </include>
-    <include>
-      <name>OpenRobotics/Chair_4</name>
-      <uri>model://Chair</uri>
-      <pose>11.521145737410944 -5.955042892453836 0.0 0 0 1.5708</pose>
-      <static>True</static>
-    </include>
-    <include>
-      <name>OpenRobotics/Chair_5</name>
-      <uri>model://Chair</uri>
-      <pose>10.867164251441865 -13.893617021276595 0.0 0 0 1.5708</pose>
-      <static>True</static>
-    </include>
-    <include>
-      <name>OpenRobotics/MaleVisitorOnPhone</name>
-      <uri>model://MaleVisitorOnPhone</uri>
-      <pose>11.072010856395094 -5.427790432801822 0.0 0 0 1.5708</pose>
-      <static>True</static>
-    </include>
-    <include>
-      <name>OpenRobotics/MaleVisitorOnPhone_2</name>
-      <uri>model://MaleVisitorOnPhone</uri>
-      <pose>7.185973925265351 -8.55224155479087 0.0 0 0 1.5708</pose>
-      <static>True</static>
-    </include>
-    <include>
-      <name>OpenRobotics/MaleVisitorOnPhone_3</name>
-      <uri>model://MaleVisitorOnPhone</uri>
-      <pose>8.299054912034121 -11.500945087965878 0.0 0 0 1.5708</pose>
+      <name>OpenRobotics/Bookshelf</name>
+      <uri>model://Bookshelf</uri>
+      <pose>7.759224277260629 -5.1059441830854455 0.0 0 0 1.5708</pose>
       <static>True</static>
     </include>
     <include>
       <name>OpenRobotics/Sofa</name>
       <uri>model://Sofa</uri>
-      <pose>4.388610478359909 -13.610332961760285 0.0 0 0 1.5708</pose>
+      <pose>1.9408677506332856 -13.937506157419323 0.0 0 0 1.5708</pose>
       <static>True</static>
     </include>
     <include>
       <name>OpenRobotics/Sofa_2</name>
       <uri>model://Sofa</uri>
-      <pose>13.358212572093247 -13.706121262055929 0.0 0 0 1.5708</pose>
+      <pose>1.9239248115025718 -18.381444779545323 0.0 0 0 1.5708</pose>
       <static>True</static>
     </include>
     <include>
-      <name>OpenRobotics/VendingMachine</name>
-      <uri>model://VendingMachine</uri>
-      <pose>1.979818736974749 -13.7996995104929 0.0 0 0 1.5708</pose>
-      <static>True</static>
-    </include>
-    <include>
-      <name>OpenRobotics/OfficeChairBlue</name>
-      <uri>model://OfficeChairBlue</uri>
-      <pose>5.5303639800319875 -9.981718606116415 0.0 0 0 1.5708</pose>
-      <static>True</static>
-    </include>
-    <include>
-      <name>OpenRobotics/OfficeChairBlue_2</name>
-      <uri>model://OfficeChairBlue</uri>
-      <pose>5.538816459070421 -9.077788009499345 0.0 0 0 1.5708</pose>
-      <static>True</static>
-    </include>
-    <include>
-      <name>OpenRobotics/OfficeChairBlue_3</name>
-      <uri>model://OfficeChairBlue</uri>
-      <pose>11.443076624824311 -9.972742693743033 0.0 0 0 1.5708</pose>
-      <static>True</static>
-    </include>
-    <include>
-      <name>OpenRobotics/OfficeChairBlue_4</name>
-      <uri>model://OfficeChairBlue</uri>
-      <pose>11.385256627732273 -9.192138806765861 0.0 0 0 1.5708</pose>
-      <static>True</static>
-    </include>
-    <include>
-      <name>OpenRobotics/Toilet</name>
-      <uri>model://Toilet</uri>
-      <pose>2.5755246449861873 -18.602064653710077 0.0 0 0 1.5708</pose>
-      <static>True</static>
-    </include>
-    <include>
-      <name>OpenRobotics/Toilet_2</name>
-      <uri>model://Toilet</uri>
-      <pose>3.4561139921485 -18.590772064169048 0.0 0 0 1.5708</pose>
-      <static>True</static>
-    </include>
-    <include>
-      <name>OpenRobotics/Toilet_3</name>
-      <uri>model://Toilet</uri>
-      <pose>12.436116900111472 -18.57272330732322 0.0 0 0 1.5708</pose>
-      <static>True</static>
-    </include>
-    <include>
-      <name>OpenRobotics/Toilet_4</name>
-      <uri>model://Toilet</uri>
-      <pose>13.371472883245287 -18.58830998885281 0.0 0 0 1.5708</pose>
-      <static>True</static>
-    </include>
-    <include>
-      <name>OpenRobotics/Table</name>
-      <uri>model://Table</uri>
-      <pose>6.440643629137789 -10.179896282654001 0.0 0 0 1.5708</pose>
-      <static>True</static>
-    </include>
-    <include>
-      <name>OpenRobotics/Table_2</name>
-      <uri>model://Table</uri>
-      <pose>6.385537730819561 -4.3017883972277415 0.0 0 0 1.5708</pose>
-      <static>True</static>
-    </include>
-    <include>
-      <name>OpenRobotics/Table_3</name>
-      <uri>model://Table</uri>
-      <pose>12.428963311200503 -10.10642175156303 0.0 0 0 1.5708</pose>
-      <static>True</static>
-    </include>
-    <include>
-      <name>OpenRobotics/Pine Tree</name>
-      <uri>model://Pine Tree</uri>
-      <pose>8.053991179178984 -17.21848495129162 0.0 0 0 1.5708</pose>
-      <static>True</static>
-    </include>
-    <include>
-      <name>OpenRobotics/Pine Tree_2</name>
-      <uri>model://Pine Tree</uri>
-      <pose>0.42267241797121113 -16.497116270052828 0.0 0 0 1.5708</pose>
-      <static>True</static>
-    </include>
-    <include>
-      <name>OpenRobotics/Pine Tree_3</name>
-      <uri>model://Pine Tree</uri>
-      <pose>14.587631464159356 -20.925061794213153 0.0 0 0 1.5708</pose>
-      <static>True</static>
-    </include>
-    <include>
-      <name>OpenRobotics/Pine Tree_4</name>
-      <uri>model://Pine Tree</uri>
-      <pose>11.715446129985946 -20.945572626375224 0.0 0 0 1.5708</pose>
+      <name>OpenRobotics/Sofa_3</name>
+      <uri>model://Sofa</uri>
+      <pose>10.897343236243785 -5.040414486489071 0.0 0 0 1.5708</pose>
       <static>True</static>
     </include>
     <include>
       <name>OpenRobotics/Cafe table</name>
       <uri>model://Cafe table</uri>
-      <pose>4.480182232346241 -3.875374400232637 0.0 0 0 1.5708</pose>
+      <pose>11.244985618334757 -11.493915816917413 0.0 0 0 1.5708</pose>
       <static>True</static>
     </include>
     <include>
-      <name>OpenRobotics/BigCubicle</name>
-      <uri>model://BigCubicle</uri>
-      <pose>11.429884166141617 -3.2004265012358846 0.0 0 0 1.5708</pose>
+      <name>OpenRobotics/Cafe table_2</name>
+      <uri>model://Cafe table</uri>
+      <pose>4.825431712910925 -13.350068871897127 0.0 0 0 1.5708</pose>
+      <static>True</static>
+    </include>
+    <include>
+      <name>OpenRobotics/FemaleVisitor</name>
+      <uri>model://FemaleVisitor</uri>
+      <pose>1.5819623145586894 -13.273302498492734 0.0 0 0 1.5708</pose>
+      <static>True</static>
+    </include>
+    <include>
+      <name>OpenRobotics/TrashBin</name>
+      <uri>model://TrashBin</uri>
+      <pose>2.772689568142089 -14.171964078986328 0.0 0 0 1.5708</pose>
+      <static>True</static>
+    </include>
+    <include>
+      <name>OpenRobotics/VendingMachine</name>
+      <uri>model://VendingMachine</uri>
+      <pose>8.018608629775 -14.025931242441423 0.0 0 0 1.5708</pose>
+      <static>True</static>
+    </include>
+    <include>
+      <name>OpenRobotics/VendingMachine_2</name>
+      <uri>model://VendingMachine</uri>
+      <pose>7.378311484339028 -18.47429243767731 0.0 0 0 1.5708</pose>
+      <static>True</static>
+    </include>
+    <include>
+      <name>OpenRobotics/VendingMachine_3</name>
+      <uri>model://VendingMachine</uri>
+      <pose>10.606376612137549 -15.851891223744506 0.0 0 0 -1.5486</pose>
       <static>True</static>
     </include>
     <include>
       <name>OpenRobotics/DigitalKiosk</name>
       <uri>model://DigitalKiosk</uri>
-      <pose>9.16423205544516 -13.987253428973004 0.0 0 0 1.5708</pose>
+      <pose>3.1445286126553365 -9.07823252820631 0.0 0 0 1.5708</pose>
       <static>True</static>
     </include>
     <include>
-      <name>multi_floor_college_floor_0</name>
-      <uri>model://multi_floor_college_floor_0</uri>
+      <name>OpenRobotics/Chair</name>
+      <uri>model://Chair</uri>
+      <pose>8.766814800613805 -11.538651506744642 0.0 0 0 1.5708</pose>
+      <static>True</static>
+    </include>
+    <include>
+      <name>OpenRobotics/Chair_2</name>
+      <uri>model://Chair</uri>
+      <pose>8.386658153392899 -11.538651506744642 0.0 0 0 1.5708</pose>
+      <static>True</static>
+    </include>
+    <include>
+      <name>OpenRobotics/Chair_3</name>
+      <uri>model://Chair</uri>
+      <pose>8.006510298563864 -11.529806360524871 0.0 0 0 1.5708</pose>
+      <static>True</static>
+    </include>
+    <include>
+      <name>OpenRobotics/WoodenChair</name>
+      <uri>model://WoodenChair</uri>
+      <pose>8.544894829851364 -15.934152842066748 0.0 0 0 -3.1416</pose>
+      <static>True</static>
+    </include>
+    <include>
+      <name>OpenRobotics/WoodenChair_2</name>
+      <uri>model://WoodenChair</uri>
+      <pose>8.163656718430627 -16.59178858426752 0.0 0 0 2.0754</pose>
+      <static>True</static>
+    </include>
+    <include>
+      <name>OpenRobotics/MopCart1_Dynamic_Obstacle</name>
+      <uri>model://MopCart1</uri>
+      <pose>5.144718631225793 -16.529705505283623 0.0 0 0 1.5708</pose>
+      <static>True</static>
+    </include>
+    <include>
+      <name>OpenRobotics/OfficeChairGrey</name>
+      <uri>model://OfficeChairGrey</uri>
+      <pose>3.0393188515561538 -4.521953515175727 0.0 0 0 1.5708</pose>
+      <static>True</static>
+    </include>
+    <include>
+      <name>OpenRobotics/OfficeChairGrey_2</name>
+      <uri>model://OfficeChairGrey</uri>
+      <pose>6.027316511775527 -4.534561805115241 0.0 0 0 -1.5643</pose>
+      <static>True</static>
+    </include>
+    <include>
+      <name>OpenRobotics/StorageRack</name>
+      <uri>model://StorageRack</uri>
+      <pose>4.10147495884561 -8.795398866578491 0.0 0 0 1.5708</pose>
+      <static>True</static>
+    </include>
+    <include>
+      <name>OpenRobotics/StorageRack_2</name>
+      <uri>model://StorageRack</uri>
+      <pose>4.121029238361285 -7.905573639912801 0.0 0 0 1.5708</pose>
+      <static>True</static>
+    </include>
+    <include>
+      <name>multi_floor_college_ground</name>
+      <uri>model://multi_floor_college_ground</uri>
       <pose>0 0 0.0 0 0 0</pose>
     </include>
     <rmf_charger_waypoints name="charger_waypoints" />
   
-    <model name="aruco_0_v52">
+    <model name="aruco_1_v78">
       <static>true</static>
-      <pose>13.985886686376194 -4.432520719236175 0.25 0 0 0.0</pose>
+      <pose>4.035988416185405 -9.174649058917394 0.25 0 0 0.7853981633974483</pose>
       <link name="link">
         <visual name="visual">
           <geometry><box><size>0.5 0.5 0.5</size></box></geometry>
@@ -466,7 +417,7 @@
             <diffuse>0.9 0.6 0.1 1</diffuse>
             <pbr>
               <metal>
-                <albedo_map>/home/nemilai/ros2_ws/src/mini_r1_v1_description/worlds/generated/aruco_0.png</albedo_map>
+                <albedo_map>/home/tanay/ros2_ws/src/mini_r1_v1_description/worlds/generated/aruco_1.png</albedo_map>
               </metal>
             </pbr>
           </material>
@@ -477,9 +428,9 @@
       </link>
     </model>
 
-    <model name="aruco_2_v53">
+    <model name="aruco_2_v79">
       <static>true</static>
-      <pose>6.31611496146949 -12.573014103620414 0.25 0 0 0.6981317007977318</pose>
+      <pose>5.062074269734199 -10.590307214420267 0.25 0 0 1.0471975511965976</pose>
       <link name="link">
         <visual name="visual">
           <geometry><box><size>0.5 0.5 0.5</size></box></geometry>
@@ -499,9 +450,9 @@
       </link>
     </model>
 
-    <model name="aruco_3_v54">
+    <model name="aruco_3_v80">
       <static>true</static>
-      <pose>1.9828236320457517 -7.367527746813357 0.25 0 0 1.0471975511965976</pose>
+      <pose>17.17816021932902 -21.53745491025401 0.25 0 0 0.0</pose>
       <link name="link">
         <visual name="visual">
           <geometry><box><size>0.5 0.5 0.5</size></box></geometry>
@@ -521,31 +472,9 @@
       </link>
     </model>
 
-    <model name="aruco_1_v55">
+    <model name="aruco_4_v81">
       <static>true</static>
-      <pose>9.99871080308244 -12.337653273881646 0.25 0 0 0.3490658503988659</pose>
-      <link name="link">
-        <visual name="visual">
-          <geometry><box><size>0.5 0.5 0.5</size></box></geometry>
-          <material>
-            <ambient>0.9 0.6 0.1 1</ambient>
-            <diffuse>0.9 0.6 0.1 1</diffuse>
-            <pbr>
-              <metal>
-                <albedo_map>/home/nemilai/ros2_ws/src/mini_r1_v1_description/worlds/generated/aruco_1.png</albedo_map>
-              </metal>
-            </pbr>
-          </material>
-        </visual>
-        <collision name="collision">
-          <geometry><box><size>0.5 0.5 0.5</size></box></geometry>
-        </collision>
-      </link>
-    </model>
-
-    <model name="aruco_4_v56">
-      <static>true</static>
-      <pose>7.403130906799786 -1.9563320893713951 0.25 0 0 0.7853981633974483</pose>
+      <pose>15.171779858803447 -25.52578435697096 0.25 0 0 0.4363323129985824</pose>
       <link name="link">
         <visual name="visual">
           <geometry><box><size>0.5 0.5 0.5</size></box></geometry>
@@ -562,258 +491,6 @@
         <collision name="collision">
           <geometry><box><size>0.5 0.5 0.5</size></box></geometry>
         </collision>
-      </link>
-    </model>
-
-    <model name="sign_3_rotate_180_clockwise_v57">
-      <static>true</static>
-      <pose>7.639528909998545 -9.798613870983376 0 0 0 0.8203047484373349</pose>
-      <link name="link">
-        <!-- Pole -->
-        <visual name="pole">
-          <pose>0 0 0.075 0 0 0</pose>
-          <geometry><cylinder><radius>0.015</radius><length>0.15</length></cylinder></geometry>
-          <material>
-            <ambient>0.8 0.8 0.8 1</ambient><diffuse>0.8 0.8 0.8 1</diffuse>
-            <pbr><metal><albedo_map>file:///home/nemilai/ros2_ws/src/mini_r1_v1_description/worlds/wood_texture.jpg</albedo_map></metal></pbr>
-          </material>
-        </visual>
-        <collision name="pole_col">
-          <pose>0 0 0.075 0 0 0</pose>
-          <geometry><cylinder><radius>0.015</radius><length>0.15</length></cylinder></geometry>
-        </collision>
-        <!-- Sign panel -->
-        <visual name="panel">
-          <pose>0 0 0.3 0 0 0</pose>
-          <geometry><box><size>0.015 0.3 0.3</size></box></geometry>
-          <material>
-            <ambient>0.8 0.8 0.8 1</ambient><diffuse>0.8 0.8 0.8 1</diffuse>
-            <pbr><metal><albedo_map>file:///home/nemilai/ros2_ws/src/mini_r1_v1_description/worlds/wood_texture.jpg</albedo_map></metal></pbr>
-          </material>
-        </visual>
-        <!-- Sign face (front) -->
-        <visual name="sign_front">
-          <pose>0.0085 0 0.3 0 0 0</pose>
-          <geometry><box><size>0.001 0.3 0.3</size></box></geometry>
-          <material>
-            <ambient>1 1 1 1</ambient><diffuse>1 1 1 1</diffuse>
-            <pbr><metal><albedo_map>file:///home/nemilai/ros2_ws/src/mini_r1_v1_description/worlds/generated/sign_3_rotate_180_clockwise.png</albedo_map></metal></pbr>
-          </material>
-        </visual>
-        <collision name="panel_col">
-          <pose>0 0 0.3 0 0 0</pose>
-          <geometry><box><size>0.015 0.3 0.3</size></box></geometry>
-        </collision>
-      </link>
-    </model>
-
-    <model name="sign_0_left_v58">
-      <static>true</static>
-      <pose>1.8498715649687394 -2.8955459700479813 0 0 0 0.0</pose>
-      <link name="link">
-        <!-- Pole -->
-        <visual name="pole">
-          <pose>0 0 0.075 0 0 0</pose>
-          <geometry><cylinder><radius>0.015</radius><length>0.15</length></cylinder></geometry>
-          <material>
-            <ambient>0.8 0.8 0.8 1</ambient><diffuse>0.8 0.8 0.8 1</diffuse>
-            <pbr><metal><albedo_map>file:///home/nemilai/ros2_ws/src/mini_r1_v1_description/worlds/wood_texture.jpg</albedo_map></metal></pbr>
-          </material>
-        </visual>
-        <collision name="pole_col">
-          <pose>0 0 0.075 0 0 0</pose>
-          <geometry><cylinder><radius>0.015</radius><length>0.15</length></cylinder></geometry>
-        </collision>
-        <!-- Sign panel -->
-        <visual name="panel">
-          <pose>0 0 0.3 0 0 0</pose>
-          <geometry><box><size>0.015 0.3 0.3</size></box></geometry>
-          <material>
-            <ambient>0.8 0.8 0.8 1</ambient><diffuse>0.8 0.8 0.8 1</diffuse>
-            <pbr><metal><albedo_map>file:///home/nemilai/ros2_ws/src/mini_r1_v1_description/worlds/wood_texture.jpg</albedo_map></metal></pbr>
-          </material>
-        </visual>
-        <!-- Sign face (front) -->
-        <visual name="sign_front">
-          <pose>0.0085 0 0.3 0 0 0</pose>
-          <geometry><box><size>0.001 0.3 0.3</size></box></geometry>
-          <material>
-            <ambient>1 1 1 1</ambient><diffuse>1 1 1 1</diffuse>
-            <pbr><metal><albedo_map>file:///home/nemilai/ros2_ws/src/mini_r1_v1_description/worlds/generated/sign_0_left.png</albedo_map></metal></pbr>
-          </material>
-        </visual>
-        <collision name="panel_col">
-          <pose>0 0 0.3 0 0 0</pose>
-          <geometry><box><size>0.015 0.3 0.3</size></box></geometry>
-        </collision>
-      </link>
-    </model>
-
-    <model name="sign_1_forward_v59">
-      <static>true</static>
-      <pose>3.2226336451315856 -6.889032132990839 0 0 0 0.5585053606381855</pose>
-      <link name="link">
-        <!-- Pole -->
-        <visual name="pole">
-          <pose>0 0 0.075 0 0 0</pose>
-          <geometry><cylinder><radius>0.015</radius><length>0.15</length></cylinder></geometry>
-          <material>
-            <ambient>0.8 0.8 0.8 1</ambient><diffuse>0.8 0.8 0.8 1</diffuse>
-            <pbr><metal><albedo_map>file:///home/nemilai/ros2_ws/src/mini_r1_v1_description/worlds/wood_texture.jpg</albedo_map></metal></pbr>
-          </material>
-        </visual>
-        <collision name="pole_col">
-          <pose>0 0 0.075 0 0 0</pose>
-          <geometry><cylinder><radius>0.015</radius><length>0.15</length></cylinder></geometry>
-        </collision>
-        <!-- Sign panel -->
-        <visual name="panel">
-          <pose>0 0 0.3 0 0 0</pose>
-          <geometry><box><size>0.015 0.3 0.3</size></box></geometry>
-          <material>
-            <ambient>0.8 0.8 0.8 1</ambient><diffuse>0.8 0.8 0.8 1</diffuse>
-            <pbr><metal><albedo_map>file:///home/nemilai/ros2_ws/src/mini_r1_v1_description/worlds/wood_texture.jpg</albedo_map></metal></pbr>
-          </material>
-        </visual>
-        <!-- Sign face (front) -->
-        <visual name="sign_front">
-          <pose>0.0085 0 0.3 0 0 0</pose>
-          <geometry><box><size>0.001 0.3 0.3</size></box></geometry>
-          <material>
-            <ambient>1 1 1 1</ambient><diffuse>1 1 1 1</diffuse>
-            <pbr><metal><albedo_map>file:///home/nemilai/ros2_ws/src/mini_r1_v1_description/worlds/generated/sign_1_forward.png</albedo_map></metal></pbr>
-          </material>
-        </visual>
-        <collision name="panel_col">
-          <pose>0 0 0.3 0 0 0</pose>
-          <geometry><box><size>0.015 0.3 0.3</size></box></geometry>
-        </collision>
-      </link>
-    </model>
-
-    <model name="sign_2_right_v60">
-      <static>true</static>
-      <pose>7.450104202006495 -6.982629767847623 0 0 0 0.8726646259971648</pose>
-      <link name="link">
-        <!-- Pole -->
-        <visual name="pole">
-          <pose>0 0 0.075 0 0 0</pose>
-          <geometry><cylinder><radius>0.015</radius><length>0.15</length></cylinder></geometry>
-          <material>
-            <ambient>0.8 0.8 0.8 1</ambient><diffuse>0.8 0.8 0.8 1</diffuse>
-            <pbr><metal><albedo_map>file:///home/nemilai/ros2_ws/src/mini_r1_v1_description/worlds/wood_texture.jpg</albedo_map></metal></pbr>
-          </material>
-        </visual>
-        <collision name="pole_col">
-          <pose>0 0 0.075 0 0 0</pose>
-          <geometry><cylinder><radius>0.015</radius><length>0.15</length></cylinder></geometry>
-        </collision>
-        <!-- Sign panel -->
-        <visual name="panel">
-          <pose>0 0 0.3 0 0 0</pose>
-          <geometry><box><size>0.015 0.3 0.3</size></box></geometry>
-          <material>
-            <ambient>0.8 0.8 0.8 1</ambient><diffuse>0.8 0.8 0.8 1</diffuse>
-            <pbr><metal><albedo_map>file:///home/nemilai/ros2_ws/src/mini_r1_v1_description/worlds/wood_texture.jpg</albedo_map></metal></pbr>
-          </material>
-        </visual>
-        <!-- Sign face (front) -->
-        <visual name="sign_front">
-          <pose>0.0085 0 0.3 0 0 0</pose>
-          <geometry><box><size>0.001 0.3 0.3</size></box></geometry>
-          <material>
-            <ambient>1 1 1 1</ambient><diffuse>1 1 1 1</diffuse>
-            <pbr><metal><albedo_map>file:///home/nemilai/ros2_ws/src/mini_r1_v1_description/worlds/generated/sign_2_right.png</albedo_map></metal></pbr>
-          </material>
-        </visual>
-        <collision name="panel_col">
-          <pose>0 0 0.3 0 0 0</pose>
-          <geometry><box><size>0.015 0.3 0.3</size></box></geometry>
-        </collision>
-      </link>
-    </model>
-
-    <model name="sign_4_rotate_180_clockwise_v61">
-      <static>true</static>
-      <pose>7.543701836863277 -13.737236465855668 0 0 0 0.6457718232379019</pose>
-      <link name="link">
-        <!-- Pole -->
-        <visual name="pole">
-          <pose>0 0 0.075 0 0 0</pose>
-          <geometry><cylinder><radius>0.015</radius><length>0.15</length></cylinder></geometry>
-          <material>
-            <ambient>0.8 0.8 0.8 1</ambient><diffuse>0.8 0.8 0.8 1</diffuse>
-            <pbr><metal><albedo_map>file:///home/nemilai/ros2_ws/src/mini_r1_v1_description/worlds/wood_texture.jpg</albedo_map></metal></pbr>
-          </material>
-        </visual>
-        <collision name="pole_col">
-          <pose>0 0 0.075 0 0 0</pose>
-          <geometry><cylinder><radius>0.015</radius><length>0.15</length></cylinder></geometry>
-        </collision>
-        <!-- Sign panel -->
-        <visual name="panel">
-          <pose>0 0 0.3 0 0 0</pose>
-          <geometry><box><size>0.015 0.3 0.3</size></box></geometry>
-          <material>
-            <ambient>0.8 0.8 0.8 1</ambient><diffuse>0.8 0.8 0.8 1</diffuse>
-            <pbr><metal><albedo_map>file:///home/nemilai/ros2_ws/src/mini_r1_v1_description/worlds/wood_texture.jpg</albedo_map></metal></pbr>
-          </material>
-        </visual>
-        <!-- Sign face (front) -->
-        <visual name="sign_front">
-          <pose>0.0085 0 0.3 0 0 0</pose>
-          <geometry><box><size>0.001 0.3 0.3</size></box></geometry>
-          <material>
-            <ambient>1 1 1 1</ambient><diffuse>1 1 1 1</diffuse>
-            <pbr><metal><albedo_map>file:///home/nemilai/ros2_ws/src/mini_r1_v1_description/worlds/generated/sign_4_rotate_180_clockwise.png</albedo_map></metal></pbr>
-          </material>
-        </visual>
-        <collision name="panel_col">
-          <pose>0 0 0.3 0 0 0</pose>
-          <geometry><box><size>0.015 0.3 0.3</size></box></geometry>
-        </collision>
-      </link>
-    </model>
-
-    <model name="zone_start">
-      <static>true</static>
-      <pose>13.932069984975524 -7.936994135608007 1.0 0 0 0</pose>
-      <link name="link">
-        <visual name="cylinder">
-          <visibility_flags>1</visibility_flags>
-          <transparency>0.4</transparency>
-          <geometry>
-            <cylinder>
-              <radius>1.0</radius>
-              <length>2.0</length>
-            </cylinder>
-          </geometry>
-          <material>
-            <ambient>1.0 0.5 0.0 1.0</ambient>
-            <diffuse>1.0 0.5 0.0 1.0</diffuse>
-          </material>
-        </visual>
-      </link>
-    </model>
-
-    <model name="zone_goal">
-      <static>true</static>
-      <pose>7.400688217903358 -18.933523966461493 1.0 0 0 0</pose>
-      <link name="link">
-        <visual name="cylinder">
-          <visibility_flags>1</visibility_flags>
-          <transparency>0.4</transparency>
-          <geometry>
-            <cylinder>
-              <radius>1.0</radius>
-              <length>2.0</length>
-            </cylinder>
-          </geometry>
-          <material>
-            <ambient>0.0 1.0 1.0 1.0</ambient>
-            <diffuse>0.0 1.0 1.0 1.0</diffuse>
-          </material>
-        </visual>
       </link>
     </model>
   </world>
