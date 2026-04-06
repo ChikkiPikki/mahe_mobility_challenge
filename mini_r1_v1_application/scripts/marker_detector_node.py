@@ -451,11 +451,7 @@ class MarkerDetectorNode(Node):
                 if not self._is_arrow_color_mask(hsv, mask_u8):
                     continue
                 n_orange += 1
-
-                # Filter: must have white surround (sign panel)
-                if not self._has_white_surround(hsv, mask_u8):
-                    continue
-                n_white += 1
+                n_white += 1  # skip white surround check — orange is unique enough
 
                 # Classify direction
                 direction, cnt = self._classify_direction_from_mask(mask_u8)
