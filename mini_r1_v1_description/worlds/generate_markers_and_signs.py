@@ -70,7 +70,10 @@ def deg_to_rad(d):
 def generate_aruco_image(marker_id, out_path):
     """Generate a white-bordered ArUco marker PNG."""
     aruco_dict = cv2.aruco.getPredefinedDictionary(ARUCO_DICT)
-    marker_core = cv2.aruco.drawMarker(aruco_dict, marker_id, ARUCO_IMG_PX - 80)
+    try:
+        marker_core = cv2.aruco.generateImageMarker(aruco_dict, marker_id, ARUCO_IMG_PX - 80)
+    except AttributeError:
+        marker_core = cv2.aruco.drawMarker(aruco_dict, marker_id, ARUCO_IMG_PX - 80)
     # white border
     img = 255 * np.ones((ARUCO_IMG_PX, ARUCO_IMG_PX), dtype=np.uint8)
     off = 40
