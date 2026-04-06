@@ -105,7 +105,10 @@ RUN pip3 install --no-cache-dir --break-system-packages \
     Pillow \
     setuptools \
     "numpy<2" \
-    ultralytics
+    torch torchvision --index-url https://download.pytorch.org/whl/cu121 \
+    && pip3 install --no-cache-dir --break-system-packages \
+    ultralytics \
+    opencv-python-headless>=4.10
 
 # ── Initialise rosdep ──────────────────────────────────────────────────
 RUN if [ ! -f /etc/ros/rosdep/sources.list.d/20-default.list ]; then \
