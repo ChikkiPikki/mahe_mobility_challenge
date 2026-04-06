@@ -470,11 +470,12 @@ class NavigationBrain(Node):
                 time.sleep(1.0)
                 continue
 
+            self.get_logger().info("Got frame, preparing VLM call...")
+
             # Rate limit
             now = time.time()
             wait = config.MIN_VLM_INTERVAL - (now - last_vlm_time)
             if wait > 0:
-                # While waiting, keep executing queued command if any
                 time.sleep(wait)
 
             # Record odom for stuck detection
@@ -487,8 +488,11 @@ class NavigationBrain(Node):
                 self.record_position()
 
             # Call VLM
+            self.get_logger().info(f"Calling VLM API ({self.current_provider})...")
             last_vlm_time = time.time()
             cmd = self.call_vlm(frame_b64)
+            elapsed = time.time() - last_vlm_time
+            self.get_logger().info(f"VLM response in {elapsed:.1f}s: {cmd is not None}")
 
             if cmd is None:
                 # Both providers failed — stop and wait
