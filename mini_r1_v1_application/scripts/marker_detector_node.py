@@ -19,8 +19,7 @@ import tf2_ros
 from tf2_ros import TransformException
 from scipy.spatial.transform import Rotation as ScipyRotation
 
-# MobileSAM via ultralytics
-from ultralytics import SAM
+# FastSAM via ultralytics (loaded in __init__ to avoid import-time GPU allocation)
 
 
 class MarkerDetectorNode(Node):
@@ -72,15 +71,16 @@ class MarkerDetectorNode(Node):
         self.sign_blue_ratio_min = self.declare_parameter('sign_blue_ratio_min', 0.35).value
         self.sign_curved_max_convexity = self.declare_parameter('sign_curved_max_convexity', 0.65).value
 
-        # ── MobileSAM on GPU with memory optimization ──
+        # ── FastSAM (YOLO-based, much faster than MobileSAM) ──
         import torch
         import os
         os.environ['PYTORCH_CUDA_ALLOC_CONF'] = 'expandable_segments:True'
         if torch.cuda.is_available():
             torch.cuda.empty_cache()
-        self.get_logger().info("Loading MobileSAM model (GPU)...")
-        self.sam_model = SAM("mobile_sam.pt")
-        self.get_logger().info("MobileSAM loaded on GPU.")
+        self.get_logger().info("Loading FastSAM model...")
+        from ultralytics import FastSAM
+        self.sam_model = FastSAM("FastSAM-s.pt")  # small variant, ~23MB
+        self.get_logger().info("FastSAM loaded.")
         self.frame_counter = 0
         self.sam_process_interval = int(self.declare_parameter('sam_process_interval', 2).value)
 
@@ -398,18 +398,17 @@ class MarkerDetectorNode(Node):
         cv_bgr = cv2.cvtColor(cv_rgb, cv2.COLOR_RGB2BGR)
         hsv = cv2.cvtColor(cv_rgb, cv2.COLOR_RGB2HSV)
 
-        # Downscale to 320x240 to fit in VRAM alongside Gazebo
         import torch
-        small_bgr = cv2.resize(cv_bgr, (320, 240), interpolation=cv2.INTER_AREA)
 
         try:
-            torch.cuda.empty_cache()
-            results = self.sam_model(small_bgr, verbose=False)
+            if torch.cuda.is_available():
+                torch.cuda.empty_cache()
+            results = self.sam_model(cv_bgr, imgsz=480, conf=0.3,
+                                     device="cuda" if torch.cuda.is_available() else "cpu",
+                                     verbose=False)
         except Exception as e:
             self.get_logger().error(f"SAM inference error: {e}", throttle_duration_sec=10.0)
             return
-        finally:
-            torch.cuda.empty_cache()
 
         # Annotated image for RViz
         annotated = cv_bgr.copy()
@@ -419,9 +418,11 @@ class MarkerDetectorNode(Node):
 
             for idx in range(masks_data.shape[0]):
                 raw_mask = masks_data[idx].astype(np.uint8)
-                # Resize mask from downscaled SAM output to full image size
-                mask = cv2.resize(raw_mask, (w_img, h_img),
-                                  interpolation=cv2.INTER_NEAREST)
+                if raw_mask.shape[:2] != (h_img, w_img):
+                    mask = cv2.resize(raw_mask, (w_img, h_img),
+                                      interpolation=cv2.INTER_NEAREST)
+                else:
+                    mask = raw_mask
                 mask_u8 = (mask > 0.5).astype(np.uint8) * 255
 
                 mask_area = np.count_nonzero(mask_u8)
