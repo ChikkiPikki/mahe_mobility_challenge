@@ -59,12 +59,35 @@ void MissionControlPanel::onInitialize()
 
 void MissionControlPanel::markerCallback(const visualization_msgs::msg::MarkerArray::SharedPtr msg)
 {
+  // Collect sign directions from sign_text markers
+  std::map<int, std::string> sign_directions;
+  for (const auto & marker : msg->markers) {
+    if (marker.ns == "sign_text" && !marker.text.empty()) {
+      // text is "Sign: forward" etc.
+      auto pos = marker.text.find(": ");
+      if (pos != std::string::npos) {
+        sign_directions[marker.id] = marker.text.substr(pos + 2);
+      }
+    }
+  }
+
   for (const auto & marker : msg->markers) {
     if (marker.action == visualization_msgs::msg::Marker::ADD) {
-      if (marker.ns == "aruco" || marker.ns == "sign") {
-        QString q_ns = QString::fromStdString(marker.ns);
+      if (marker.ns == "aruco") {
         Q_EMIT newMarkerDetected(
-          q_ns, marker.id,
+          QString("aruco"), marker.id,
+          marker.pose.position.x,
+          marker.pose.position.y,
+          marker.pose.position.z);
+      } else if (marker.ns == "sign") {
+        // Include direction in the type column
+        QString type_str = "sign";
+        auto it = sign_directions.find(marker.id);
+        if (it != sign_directions.end()) {
+          type_str = QString("sign (%1)").arg(QString::fromStdString(it->second));
+        }
+        Q_EMIT newMarkerDetected(
+          type_str, marker.id,
           marker.pose.position.x,
           marker.pose.position.y,
           marker.pose.position.z);

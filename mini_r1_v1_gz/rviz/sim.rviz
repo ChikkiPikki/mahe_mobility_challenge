@@ -1,21 +1,10 @@
 Panels:
-  - Class: rviz_common/Displays
-    Help Height: 78
-    Name: Displays
-    Property Tree Widget:
-      Expanded:
-        - /Global Options1
-        - /Status1
-        - /RobotModel1
-        - /TF1
-        - /LaserScan1
-        - /Image1
-      Splitter Ratio: 0.5
-    Tree Height: 549
   - Class: mini_r1_v1_gz/TeleopPanel
     Name: TeleopPanel
   - Class: mini_r1_v1_application/MissionControlPanel
     Name: MissionControlPanel
+  - Class: mini_r1_v1_application/NavigatorStatusPanel
+    Name: NavigatorStatus
   - Class: rviz_common/Views
     Expanded:
       - /Current View1
@@ -87,20 +76,6 @@ Visualization Manager:
         Value: /r1_mini/lidar
       Use Fixed Frame: true
       Use rainbow: true
-      Value: true
-    - Class: rviz_default_plugins/Image
-      Enabled: true
-      Max Value: 1
-      Median window: 5
-      Min Value: 0
-      Name: Image
-      Normalize Range: true
-      Topic:
-        Depth: 5
-        Durability Policy: Volatile
-        History Policy: Keep Last
-        Reliability Policy: Reliable
-        Value: /r1_mini/camera/image_raw
       Value: true
     - Class: rviz_default_plugins/Image
       Enabled: true

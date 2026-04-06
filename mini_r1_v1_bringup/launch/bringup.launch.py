@@ -153,6 +153,18 @@ def generate_launch_description():
         output='screen',
     )
 
+    # 8. Maze Navigator Node: config-driven autonomous navigation
+    behavior_config = os.path.join(app_package_share, 'config', 'behavior_config.yaml')
+    maze_navigator = Node(
+        package='mini_r1_v1_application',
+        executable='maze_navigator_node.py',
+        name='maze_navigator_node',
+        output='screen',
+        parameters=[{
+            'behavior_config': behavior_config,
+        }]
+    )
+
     return LaunchDescription([
         sim_launch,
         tf_lidar,
@@ -164,5 +176,6 @@ def generate_launch_description():
         marker_detector,
         mission_zone,
         dynamic_obstacles,
+        maze_navigator,
     ])
 

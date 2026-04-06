@@ -17,7 +17,7 @@ set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTOUIC ON)
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
-# RViz Panel Plugin Library
+# RViz Panel Plugin Libraries
 add_library(mission_control_panel SHARED
   src/mission_control_panel.cpp
   include/mini_r1_v1_application/mission_control_panel.hpp
@@ -34,8 +34,23 @@ ament_target_dependencies(mission_control_panel
 )
 target_link_libraries(mission_control_panel Qt5::Widgets)
 
-# Install RViz Plugin Library
-install(TARGETS mission_control_panel
+add_library(navigator_status_panel SHARED
+  src/navigator_status_panel.cpp
+  include/mini_r1_v1_application/navigator_status_panel.hpp
+)
+target_include_directories(navigator_status_panel PUBLIC
+  "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>"
+  "$<INSTALL_INTERFACE:include>"
+)
+ament_target_dependencies(navigator_status_panel
+  rclcpp
+  rviz_common
+  std_msgs
+)
+target_link_libraries(navigator_status_panel Qt5::Widgets)
+
+# Install RViz Plugin Libraries
+install(TARGETS mission_control_panel navigator_status_panel
   ARCHIVE DESTINATION lib
   LIBRARY DESTINATION lib
   RUNTIME DESTINATION bin
@@ -55,7 +70,13 @@ install(PROGRAMS
   scripts/marker_detector_node.py
   scripts/mission_zone_node.py
   scripts/dynamic_obstacle_node.py
+  scripts/maze_navigator_node.py
   DESTINATION lib/${PROJECT_NAME}
+)
+
+# Install nav_lib Python package alongside the scripts
+install(DIRECTORY scripts/nav_lib/
+  DESTINATION lib/${PROJECT_NAME}/nav_lib
 )
 
 # Install config files

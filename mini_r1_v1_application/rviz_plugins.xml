@@ -7,3 +7,12 @@
     </description>
   </class>
 </library>
+<library path="navigator_status_panel">
+  <class name="mini_r1_v1_application/NavigatorStatusPanel"
+         type="mini_r1_v1_application::NavigatorStatusPanel"
+         base_class_type="rviz_common::Panel">
+    <description>
+      Navigator status panel showing state, detectors, recovery, and reasoning.
+    </description>
+  </class>
+</library>

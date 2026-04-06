@@ -1,0 +1,221 @@
+config_version: 1
+
+speed_profiles:
+  corridor:    { linear: 0.8,  angular: 0.5 }
+  approach:    { linear: 0.3,  angular: 0.3 }
+  turning:     { linear: 0.0,  angular: 0.8 }
+  reversing:   { linear: -0.3, angular: 0.0 }
+  cautious:    { linear: 0.4,  angular: 0.4 }
+
+thresholds:
+  stuck_displacement_m: 0.05
+  stuck_time_window_s: 4.0
+  loop_radius_m: 0.5
+  loop_min_gap_s: 20.0
+  loop_history_size: 200
+  dead_end_arc_deg: 60
+  dead_end_check_distance_m: 0.6
+  dead_end_occupied_threshold: 0.8
+  sign_cooldown_s: 3.0
+  command_rate_hz: 20
+  costmap_stale_timeout_s: 2.0
+  odom_stale_timeout_s: 1.0
+  position_log_interval_s: 2.0
+
+detectors:
+  goal_reached:
+    method: topic_match
+    params: { value: "MISSION_COMPLETE" }
+    priority: 0
+    cooldown_s: 0.0
+
+  sign_visible:
+    method: topic_string
+    params:
+      valid_values: ["forward", "left", "right", "rotate_180"]
+      stale_after_s: 2.0
+    priority: 10
+    cooldown_s: 3.0
+
+  dead_end:
+    method: arc_occupancy
+    params:
+      arc_half_deg: 60
+      check_distance_m: 0.6
+      occupied_ratio: 0.8
+    priority: 20
+    cooldown_s: 1.0
+
+  stuck:
+    method: displacement_window
+    params:
+      displacement_m: 0.05
+      window_s: 4.0
+    priority: 30
+    cooldown_s: 5.0
+
+  loop:
+    method: position_revisit
+    params:
+      radius_m: 0.5
+      min_gap_s: 20.0
+      history_size: 200
+    priority: 40
+    cooldown_s: 10.0
+
+  open_left:
+    method: lateral_gap
+    params:
+      side: left
+      arc_half_deg: 45
+      min_distance_m: 0.8
+      free_ratio: 0.5
+    priority: 50
+    cooldown_s: 0.5
+
+  open_right:
+    method: lateral_gap
+    params:
+      side: right
+      arc_half_deg: 45
+      min_distance_m: 0.8
+      free_ratio: 0.5
+    priority: 50
+    cooldown_s: 0.5
+
+behaviors:
+  gap_follow:
+    type: gap_follow
+    speed_profile: corridor
+    params:
+      scan_arc_deg: 180
+      scan_min_m: 0.3
+      scan_max_m: 2.0
+      kp_angular: 1.5
+      min_gap_width_deg: 15
+    timeout_s: 60.0
+    completion: { method: continuous }
+
+  move_forward:
+    type: timed_twist
+    speed_profile: corridor
+    params: { linear_x: 0.8, angular_z: 0.0 }
+    timeout_s: 30.0
+    completion: { method: continuous }
+
+  move_cautious:
+    type: timed_twist
+    speed_profile: cautious
+    params: { linear_x: 0.4, angular_z: 0.0 }
+    timeout_s: 10.0
+    completion: { method: continuous }
+
+  turn_left_90:
+    type: proportional_turn
+    speed_profile: turning
+    params: { target_angle_deg: 90, tolerance_deg: 5, kp: 2.0 }
+    timeout_s: 8.0
+    completion: { method: angle_reached }
+
+  turn_right_90:
+    type: proportional_turn
+    speed_profile: turning
+    params: { target_angle_deg: -90, tolerance_deg: 5, kp: 2.0 }
+    timeout_s: 8.0
+    completion: { method: angle_reached }
+
+  turn_180:
+    type: proportional_turn
+    speed_profile: turning
+    params: { target_angle_deg: 180, tolerance_deg: 5, kp: 2.0 }
+    timeout_s: 12.0
+    completion: { method: angle_reached }
+
+  stop:
+    type: timed_twist
+    speed_profile: corridor
+    params: { linear_x: 0.0, angular_z: 0.0 }
+    timeout_s: 1.0
+    completion: { method: duration, duration_s: 0.5 }
+
+  reverse:
+    type: timed_twist
+    speed_profile: reversing
+    params: { linear_x: -0.3, angular_z: 0.0 }
+    timeout_s: 3.0
+    completion: { method: duration, duration_s: 1.5 }
+
+  explore_random:
+    type: random_turn_forward
+    speed_profile: cautious
+    params: { turn_range_deg: [60, 180], forward_duration_s: 2.0 }
+    timeout_s: 10.0
+    completion: { method: duration, duration_s: 5.0 }
+
+sign_dispatch:
+  forward: gap_follow
+  left: turn_left_90
+  right: turn_right_90
+  rotate_180: turn_180
+
+states:
+  IDLE:
+    on_enter: stop
+    transitions:
+      - { detector: goal_reached, next: STOPPED }
+      - { detector: always, next: EXPLORING }
+
+  EXPLORING:
+    on_enter: gap_follow
+    transitions:
+      - { detector: goal_reached, next: STOPPED }
+      - { detector: sign_visible, next: EXECUTING_SIGN }
+      - { detector: dead_end, next: RECOVERING, recovery: dead_end_recovery }
+      - { detector: stuck, next: RECOVERING, recovery: stuck_recovery }
+      - { detector: loop, next: RECOVERING, recovery: loop_recovery }
+
+  EXECUTING_SIGN:
+    on_enter: null
+    transitions:
+      - { detector: goal_reached, next: STOPPED }
+      - { detector: behavior_complete, next: POST_TURN }
+      - { detector: stuck, next: RECOVERING, recovery: stuck_recovery }
+
+  POST_TURN:
+    on_enter: move_cautious
+    transitions:
+      - { detector: goal_reached, next: STOPPED }
+      - { detector: timer, params: { duration_s: 2.0 }, next: EXPLORING }
+      - { detector: dead_end, next: RECOVERING, recovery: dead_end_recovery }
+
+  RECOVERING:
+    on_enter: null
+    transitions:
+      - { detector: goal_reached, next: STOPPED }
+      - { detector: recovery_complete, next: EXPLORING }
+      - { detector: recovery_failed, next: EXPLORING }
+
+  STOPPED:
+    on_enter: stop
+    transitions: []
+
+recovery_strategies:
+  dead_end_recovery:
+    recheck: dead_end
+    steps: [stop, reverse, turn_180, move_cautious]
+
+  stuck_recovery:
+    recheck: stuck
+    steps: [stop, reverse, turn_left_90, move_cautious, reverse, turn_right_90, move_cautious, explore_random]
+
+  loop_recovery:
+    recheck: loop
+    steps: [stop, turn_left_90, move_forward, explore_random]
+
+  sign_blocked:
+    recheck: dead_end
+    steps: [stop, reverse, explore_random]
+
+conflict_rules:
+  sign_vs_dead_end: dead_end_wins
+  sign_vs_stuck: stuck_wins
