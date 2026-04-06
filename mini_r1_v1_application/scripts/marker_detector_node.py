@@ -352,7 +352,10 @@ class MarkerDetectorNode(Node):
         return white_ratio > 0.10
 
     def _classify_direction_from_mask(self, mask):
-        """Classify arrow direction from a binary mask.
+        """Classify arrow direction from orange-only binary mask.
+        Uses bbox-center vs centroid offset: arrows are asymmetric
+        (wide head, narrow tail) so centroid sits toward the tail.
+        The tip direction = bbox_center - centroid (opposite of offset).
         Returns ('forward', 'left', 'right', 'rotate_180') or None.
         """
         contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
@@ -363,41 +366,40 @@ class MarkerDetectorNode(Node):
         if area < self.sign_min_mask_area:
             return None, None
 
-        # Convexity check for curved arrows
-        hull_pts = cv2.convexHull(cnt, returnPoints=True)
-        hull_area = cv2.contourArea(hull_pts)
-        convexity = area / hull_area if hull_area > 0 else 1.0
-        if convexity < self.sign_curved_max_convexity:
-            return 'rotate_180', cnt
+        x, y, w, h = cv2.boundingRect(cnt)
+        bbox_cx = x + w / 2.0
+        bbox_cy = y + h / 2.0
 
-        # Straight arrows: centroid-to-tip
         M = cv2.moments(cnt)
         if M["m00"] == 0:
             return None, None
         cx_m = M["m10"] / M["m00"]
         cy_m = M["m01"] / M["m00"]
 
-        hull_sq = hull_pts.squeeze()
-        if hull_sq.ndim != 2:
+        # Tip direction = bbox_center - centroid (centroid is toward tail)
+        tip_dx = bbox_cx - cx_m
+        tip_dy = bbox_cy - cy_m
+        offset_mag = np.sqrt(tip_dx**2 + tip_dy**2)
+        if offset_mag < 1.5:
+            # Symmetric shape — could be rotate_180 or not an arrow
+            hull_pts = cv2.convexHull(cnt, returnPoints=True)
+            hull_area = cv2.contourArea(hull_pts)
+            convexity = area / hull_area if hull_area > 0 else 1.0
+            if convexity < 0.55:
+                return 'rotate_180', cnt
             return None, None
-        dists = np.sqrt((hull_sq[:, 0] - cx_m)**2 + (hull_sq[:, 1] - cy_m)**2)
-        tip = hull_sq[np.argmax(dists)]
 
-        dx = tip[0] - cx_m
-        dy = tip[1] - cy_m
-        if np.sqrt(dx*dx + dy*dy) < 5:
-            return None, None
+        angle = np.degrees(np.arctan2(tip_dy, tip_dx))
 
-        angle = np.degrees(np.arctan2(dy, dx))
-        # Camera sees the sign face-on, so image-left = sign's right
+        # Camera sees sign face-on: image coords
         if -135 < angle <= -45:
-            return 'forward', cnt
+            return 'forward', cnt   # tip up in image = forward
         elif -45 < angle <= 45:
-            return 'left', cnt    # image-right = sign points left
+            return 'left', cnt      # tip right in image = sign's left
         elif 45 < angle <= 135:
-            return None, None     # pointing down = back of sign
+            return None, None       # tip down = back of sign
         else:
-            return 'right', cnt   # image-left = sign points right
+            return 'right', cnt     # tip left in image = sign's right
 
     def detect_signs_sam(self, cv_rgb, cv_depth, fx, fy, cx, cy, rot, t_vec,
                          panel_markers, viz_markers):
@@ -451,7 +453,22 @@ class MarkerDetectorNode(Node):
                 if not self._is_arrow_color_mask(hsv, mask_u8):
                     continue
                 n_orange += 1
-                n_white += 1  # skip white surround check — orange is unique enough
+
+                # Filter: reject if mask is too large relative to image
+                # (dynamic obstacles, large orange objects)
+                if mask_area > (h_img * w_img * 0.03):
+                    continue
+
+                # Filter: orange region must have roughly square-ish bbox
+                # (arrows on panels are within a square sign)
+                ys_m, xs_m = np.where(mask_u8 > 0)
+                mw = xs_m.max() - xs_m.min() + 1
+                mh = ys_m.max() - ys_m.min() + 1
+                aspect = max(mw, mh) / (min(mw, mh) + 1)
+                if aspect > 4.0:
+                    continue  # too elongated, not an arrow sign
+
+                n_white += 1
 
                 # Extract ONLY orange pixels within this SAM mask, classify from that shape
                 lower = np.array([self.sign_arrow_h_low, self.sign_arrow_s_min, self.sign_arrow_v_min])
