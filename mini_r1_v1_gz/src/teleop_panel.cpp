@@ -67,10 +67,10 @@ void TeleopPanel::publishTwist()
   linear_velocity_ = 0.0;
   angular_velocity_ = 0.0;
 
-  if (keys_pressed_[0]) linear_velocity_ += 0.5;
-  if (keys_pressed_[2]) linear_velocity_ -= 0.5;
-  if (keys_pressed_[1]) angular_velocity_ += 0.5;
-  if (keys_pressed_[3]) angular_velocity_ -= 0.5;
+  if (keys_pressed_[0]) linear_velocity_ += 1.36;
+  if (keys_pressed_[2]) linear_velocity_ -= 1.36;
+  if (keys_pressed_[1]) angular_velocity_ += 1.36;
+  if (keys_pressed_[3]) angular_velocity_ -= 1.36;
 
   geometry_msgs::msg::Twist twist;
   twist.linear.x = linear_velocity_;
