@@ -86,6 +86,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     python3-requests \
     python3-rtree \
     python3-fiona \
+    # ── Gazebo Harmonic Python bindings (for dynamic_obstacle_node) ──────
+    python3-gz-transport13 \
+    python3-gz-msgs10 \
     && rm -rf /var/lib/apt/lists/*
 
 # ── Python packages not available via apt ───────────────────────────────
