@@ -71,14 +71,11 @@ class MarkerDetectorNode(Node):
         self.sign_arrow_ratio_min = self.declare_parameter('sign_arrow_ratio_min', 0.30).value
         self.sign_curved_max_convexity = self.declare_parameter('sign_curved_max_convexity', 0.65).value
 
-        # ── FastSAM (YOLO-based, runs on CPU to avoid CUDA conflicts) ──
-        import os
-        os.environ['CUDA_VISIBLE_DEVICES'] = ''  # force CPU before importing torch
-        self.get_logger().info("Loading FastSAM model (CPU)...")
+        # ── FastSAM (YOLO-based, GPU accelerated) ──
+        self.get_logger().info("Loading FastSAM model...")
         from ultralytics import FastSAM
         self.sam_model = FastSAM("FastSAM-s.pt")
-        self.sam_model.to("cpu")
-        self.get_logger().info("FastSAM loaded on CPU.")
+        self.get_logger().info("FastSAM loaded.")
         self.frame_counter = 0
         self.sam_process_interval = int(self.declare_parameter('sam_process_interval', 2).value)
 
@@ -412,8 +409,7 @@ class MarkerDetectorNode(Node):
         import torch
 
         try:
-            results = self.sam_model(cv_bgr, imgsz=480, conf=0.3,
-                                     device="cpu", verbose=False)
+            results = self.sam_model(cv_bgr, imgsz=480, conf=0.3, verbose=False)
         except Exception as e:
             self.get_logger().error(f"SAM inference error: {e}", throttle_duration_sec=10.0)
             return
