@@ -85,14 +85,15 @@ detectors:
 
 behaviors:
   gap_follow:
-    type: gap_follow
+    type: laser_gap_follow
     speed_profile: corridor
     params:
-      scan_arc_deg: 180
-      scan_min_m: 0.3
-      scan_max_m: 2.0
-      kp_angular: 1.5
+      safety_distance_m: 0.4
       min_gap_width_deg: 15
+      forward_bias: 1.5
+      kp_angular: 1.2
+      slowdown_distance_m: 0.8
+      full_speed_distance_m: 2.0
     timeout_s: 999999.0
     completion: { method: continuous }
 

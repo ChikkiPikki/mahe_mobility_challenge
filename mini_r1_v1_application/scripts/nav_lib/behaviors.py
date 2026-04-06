@@ -137,93 +137,121 @@ class RandomTurnForwardBehavior(BaseBehavior):
         return self._clamp_twist(0.4, 0.0)
 
 
-class GapFollowBehavior(BaseBehavior):
-    """Follow the largest gap in the costmap — primary corridor navigation."""
+class LaserGapFollowBehavior(BaseBehavior):
+    """Follow the largest gap using raw LiDAR ranges — no costmap needed.
+
+    LiDAR gives 360 range readings at 25Hz. We find contiguous arcs where
+    range > safety_distance, score them with a forward bias, and steer
+    toward the best gap's center. Much more responsive than costmap
+    ray-marching (2Hz, grid artifacts).
+    """
     def tick(self, ss: SensorState) -> Twist:
         if self.is_timed_out(ss):
             self._complete = True
             return self._clamp_twist(0.0, 0.0)
 
-        if ss.costmap_data is None:
-            # No costmap yet — drive forward slowly
+        if ss.lidar_ranges is None or len(ss.lidar_ranges) == 0:
             return self._clamp_twist(0.3, 0.0)
 
-        arc_half = math.radians(self.params.get('scan_arc_deg', 180) / 2.0)
-        scan_min = self.params.get('scan_min_m', 0.3)
-        scan_max = self.params.get('scan_max_m', 2.0)
-        kp = self.params.get('kp_angular', 1.5)
-        res = ss.costmap_resolution
-        if res <= 0:
+        ranges = np.array(ss.lidar_ranges, dtype=np.float32)
+        n = len(ranges)
+
+        safety = self.params.get('safety_distance_m', 0.4)
+        min_gap_deg = self.params.get('min_gap_width_deg', 15)
+        forward_bias = self.params.get('forward_bias', 1.5)
+        kp = self.params.get('kp_angular', 1.2)
+        slowdown_dist = self.params.get('slowdown_distance_m', 0.8)
+        full_speed_dist = self.params.get('full_speed_distance_m', 2.0)
+
+        # LiDAR is 360°: index 0 = angle_min, index n-1 = angle_max
+        # For our LiDAR: angle_min=-3.14, angle_max=3.14, so index 0=behind,
+        # index n/2=front. But let's compute properly:
+        angle_min = ss.lidar_angle_min
+        angle_inc = ss.lidar_angle_increment
+        if angle_inc == 0:
             return self._clamp_twist(0.3, 0.0)
 
-        n_rays = 36
-        angles = np.linspace(ss.yaw - arc_half, ss.yaw + arc_half, n_rays)
-        free_dist = np.zeros(n_rays)
+        # Forward index (angle closest to 0 = robot's front)
+        forward_idx = int(-angle_min / angle_inc) if angle_inc > 0 else n // 2
+        forward_idx = max(0, min(n - 1, forward_idx))
 
-        for i, angle in enumerate(angles):
-            max_free = scan_min
-            for d in np.arange(scan_min, scan_max, res * 2):
-                wx = ss.x + d * math.cos(angle)
-                wy = ss.y + d * math.sin(angle)
-                gx = int((wx - ss.costmap_origin_x) / res)
-                gy = int((wy - ss.costmap_origin_y) / res)
-                if 0 <= gx < ss.costmap_width and 0 <= gy < ss.costmap_height:
-                    cost = int(ss.costmap_data[gy * ss.costmap_width + gx])
-                    # -1 = unknown (treat as free), 0-64 = free, 65+ = occupied
-                    if cost >= 65:
-                        break
-                    max_free = d
-                else:
-                    # Out of costmap bounds — treat as free (unexplored)
-                    max_free = d
-            free_dist[i] = max_free
+        # Mark each ray as "free" if range > safety and valid
+        free = np.zeros(n, dtype=bool)
+        for i in range(n):
+            r = ranges[i]
+            if np.isfinite(r) and r > safety:
+                free[i] = True
 
-        # Find the widest contiguous gap
-        threshold = scan_min * 1.2
-        best_start = 0
-        best_len = 0
-        cur_start = 0
-        min_gap = self.params.get('min_gap_width_deg', 15)
-        min_gap_rays = max(1, int(min_gap / (180.0 / n_rays)))
+        # Find contiguous gaps
+        min_gap_samples = max(1, int(min_gap_deg / (360.0 / n)))
+        gaps = []
+        in_gap = False
+        gap_start = 0
+        for i in range(n):
+            if free[i] and not in_gap:
+                gap_start = i
+                in_gap = True
+            elif not free[i] and in_gap:
+                if i - gap_start >= min_gap_samples:
+                    gaps.append((gap_start, i - 1))
+                in_gap = False
+        if in_gap and n - gap_start >= min_gap_samples:
+            gaps.append((gap_start, n - 1))
 
-        for i in range(n_rays):
-            if free_dist[i] > threshold:
-                if i == 0 or free_dist[i-1] <= threshold:
-                    cur_start = i
-                gap_len = i - cur_start + 1
-                if gap_len > best_len:
-                    best_start = cur_start
-                    best_len = gap_len
-
-        if best_len < min_gap_rays:
-            # No gap — rotate in place to search
+        if not gaps:
+            # No gaps — rotate in place
             return self._clamp_twist(0.0, 0.5)
 
-        # Weight gaps toward the forward direction (center of arc)
-        # Among gaps of similar width, prefer the one closest to forward
-        center_idx = best_start + best_len // 2
+        # Score each gap: width * forward_bias_if_contains_forward
+        best_gap = None
+        best_score = -1
+        for gs, ge in gaps:
+            width = ge - gs + 1
+            center = (gs + ge) // 2
 
-        # Check if there's a gap containing the forward direction that's
-        # at least 60% as wide as the best gap — prefer it
-        forward_idx = n_rays // 2
-        for i in range(n_rays):
-            if free_dist[i] > threshold:
-                if i == 0 or free_dist[i-1] <= threshold:
-                    gs = i
-                gl = i - gs + 1
-                # This gap contains or is near the forward direction
-                if gs <= forward_idx <= gs + gl and gl >= best_len * 0.6:
-                    center_idx = gs + gl // 2
-                    break
+            # Forward bias: how close is the gap center to forward?
+            dist_to_forward = abs(center - forward_idx)
+            # Normalize: 0 = exactly forward, 1 = opposite direction
+            norm_dist = dist_to_forward / (n / 2)
+            # Score: wider gaps are better, forward gaps get a bonus
+            bias = forward_bias if norm_dist < 0.3 else 1.0
+            score = width * bias
 
-        target_angle = angles[center_idx]
-        angle_error = normalize_angle(target_angle - ss.yaw)
+            # Also consider average range in the gap (deeper = better)
+            gap_ranges = ranges[gs:ge+1]
+            valid_ranges = gap_ranges[np.isfinite(gap_ranges)]
+            if len(valid_ranges) > 0:
+                avg_depth = np.mean(valid_ranges)
+                score *= min(2.0, avg_depth / 1.0)  # bonus for deeper gaps
+
+            if score > best_score:
+                best_score = score
+                best_gap = (gs, ge)
+
+        # Steer toward the center of the best gap
+        gap_center_idx = (best_gap[0] + best_gap[1]) // 2
+        gap_center_angle = angle_min + gap_center_idx * angle_inc
+        angle_error = normalize_angle(gap_center_angle)  # target relative to robot front (0)
         angular = kp * angle_error
 
-        # Scale linear speed by forward clearance
-        forward_clear = free_dist[forward_idx] if forward_idx < n_rays else scan_min
-        speed_scale = min(1.0, forward_clear / scan_max)
-        linear = self.max_linear * max(0.2, speed_scale)
+        # Linear speed: scale by forward clearance
+        # Sample a small forward cone for clearance
+        cone_half = max(1, n // 36)  # ~10 degree cone
+        fwd_lo = max(0, forward_idx - cone_half)
+        fwd_hi = min(n, forward_idx + cone_half + 1)
+        fwd_ranges = ranges[fwd_lo:fwd_hi]
+        fwd_valid = fwd_ranges[np.isfinite(fwd_ranges) & (fwd_ranges > 0)]
+        forward_clear = float(np.min(fwd_valid)) if len(fwd_valid) > 0 else 0.0
+
+        if forward_clear < safety:
+            linear = 0.0
+        elif forward_clear < slowdown_dist:
+            linear = self.max_linear * 0.25
+        elif forward_clear < full_speed_dist:
+            scale = (forward_clear - slowdown_dist) / (full_speed_dist - slowdown_dist)
+            linear = self.max_linear * (0.25 + 0.75 * scale)
+        else:
+            linear = self.max_linear
 
         return self._clamp_twist(linear, angular)
 
@@ -232,5 +260,5 @@ BEHAVIOR_REGISTRY = {
     'timed_twist': TimedTwistBehavior,
     'proportional_turn': ProportionalTurnBehavior,
     'random_turn_forward': RandomTurnForwardBehavior,
-    'gap_follow': GapFollowBehavior,
+    'laser_gap_follow': LaserGapFollowBehavior,
 }
