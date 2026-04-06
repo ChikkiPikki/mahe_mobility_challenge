@@ -72,10 +72,11 @@ class MarkerDetectorNode(Node):
         self.sign_blue_ratio_min = self.declare_parameter('sign_blue_ratio_min', 0.35).value
         self.sign_curved_max_convexity = self.declare_parameter('sign_curved_max_convexity', 0.65).value
 
-        # ── MobileSAM ────────────────────────────────────────────────────
-        self.get_logger().info("Loading MobileSAM model...")
+        # ── MobileSAM (run on CPU to avoid VRAM conflict with Gazebo) ──
+        self.get_logger().info("Loading MobileSAM model (CPU)...")
         self.sam_model = SAM("mobile_sam.pt")
-        self.get_logger().info("MobileSAM loaded.")
+        self.sam_model.to("cpu")
+        self.get_logger().info("MobileSAM loaded on CPU.")
         self.frame_counter = 0
         self.sam_process_interval = int(self.declare_parameter('sam_process_interval', 2).value)
 
@@ -390,13 +391,17 @@ class MarkerDetectorNode(Node):
         h_depth, w_depth = cv_depth.shape[:2]
         stamp = self.get_clock().now().to_msg()
 
-        # Convert RGB to BGR for SAM (ultralytics expects BGR)
         cv_bgr = cv2.cvtColor(cv_rgb, cv2.COLOR_RGB2BGR)
         hsv = cv2.cvtColor(cv_rgb, cv2.COLOR_RGB2HSV)
 
-        # Run MobileSAM segment everything
+        # Downscale for SAM to reduce memory and speed up CPU inference
+        sam_scale = 0.5
+        small_bgr = cv2.resize(cv_bgr, None, fx=sam_scale, fy=sam_scale,
+                               interpolation=cv2.INTER_AREA)
+
+        # Run MobileSAM segment everything on CPU with downscaled image
         try:
-            results = self.sam_model(cv_bgr, verbose=False)
+            results = self.sam_model(small_bgr, device="cpu", verbose=False)
         except Exception as e:
             self.get_logger().error(f"SAM inference error: {e}", throttle_duration_sec=5.0)
             return
@@ -409,12 +414,9 @@ class MarkerDetectorNode(Node):
 
             for idx in range(masks_data.shape[0]):
                 raw_mask = masks_data[idx]
-                # Resize mask to image dimensions if needed
-                if raw_mask.shape[:2] != (h_img, w_img):
-                    mask = cv2.resize(raw_mask, (w_img, h_img),
-                                      interpolation=cv2.INTER_NEAREST)
-                else:
-                    mask = raw_mask
+                # Resize mask from downscaled SAM output to full image size
+                mask = cv2.resize(raw_mask, (w_img, h_img),
+                                  interpolation=cv2.INTER_NEAREST)
                 mask_u8 = (mask > 0.5).astype(np.uint8) * 255
 
                 mask_area = np.count_nonzero(mask_u8)

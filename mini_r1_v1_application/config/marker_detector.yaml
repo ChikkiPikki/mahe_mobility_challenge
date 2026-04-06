@@ -19,5 +19,5 @@ marker_detector_node:
     sign_blue_ratio_min: 0.35     # min fraction of mask pixels that must be blue
     sign_curved_max_convexity: 0.65
 
-    # SAM processing interval (process every N-th frame)
-    sam_process_interval: 2
+    # SAM processing interval (process every N-th frame, higher = less GPU load)
+    sam_process_interval: 5
