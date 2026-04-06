@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 """VLM Navigation Brain - Main ROS2 Node.
 
 Subscribes to camera and odom, calls VLM API, publishes Twist commands.
