@@ -12,6 +12,7 @@ import numpy as np
 from cv_bridge import CvBridge
 from sensor_msgs.msg import Image, CameraInfo
 from visualization_msgs.msg import Marker, MarkerArray
+from std_msgs.msg import String
 from geometry_msgs.msg import Point
 import message_filters
 import tf2_ros
@@ -57,31 +58,13 @@ class MarkerDetectorNode(Node):
         self.aruco_marker_length = self.declare_parameter('aruco_marker_length', 0.5).value
         self.aruco_box_size = self.declare_parameter('aruco_box_size', 0.5).value
 
-        # Sign detection preprocessing
-        self.sign_border_crop = int(self.declare_parameter('sign_border_crop', 20).value)
-        self.sign_blur_kernel = int(self.declare_parameter('sign_blur_kernel', 5).value)
-        self.sign_blur_sigma = int(self.declare_parameter('sign_blur_sigma', 1).value)
-        self.sign_canny_low = int(self.declare_parameter('sign_canny_low', 50).value)
-        self.sign_canny_high = int(self.declare_parameter('sign_canny_high', 50).value)
-        self.sign_dilate_iter = int(self.declare_parameter('sign_dilate_iter', 2).value)
-        self.sign_erode_iter = int(self.declare_parameter('sign_erode_iter', 1).value)
-
-        # Sign contour filtering
-        self.sign_min_area = int(self.declare_parameter('sign_min_area', 5000).value)
-
-        # Straight arrow
-        self.sign_approx_epsilon = self.declare_parameter('sign_approx_epsilon', 0.015).value
-        self.sign_hull_min_sides = int(self.declare_parameter('sign_hull_min_sides', 4).value)
-        self.sign_hull_max_sides = int(self.declare_parameter('sign_hull_max_sides', 6).value)
-
-        # Curved arrow
-        self.sign_curved_max_convexity = self.declare_parameter('sign_curved_max_convexity', 0.6).value
-        self.sign_curved_tip_max_angle = self.declare_parameter('sign_curved_tip_max_angle', 60.0).value
-
-        # Sign panel physical size
-        self.sign_panel_width = self.declare_parameter('sign_panel_width', 0.3).value
-        self.sign_panel_height = self.declare_parameter('sign_panel_height', 0.3).value
-        self.sign_panel_thickness = self.declare_parameter('sign_panel_thickness', 0.015).value
+        # Sign detection — blue-first approach
+        self.sign_blue_h_low = int(self.declare_parameter('sign_blue_h_low', 100).value)
+        self.sign_blue_h_high = int(self.declare_parameter('sign_blue_h_high', 130).value)
+        self.sign_blue_s_min = int(self.declare_parameter('sign_blue_s_min', 100).value)
+        self.sign_blue_v_min = int(self.declare_parameter('sign_blue_v_min', 80).value)
+        self.sign_min_blue_area = int(self.declare_parameter('sign_min_blue_area', 400).value)
+        self.sign_curved_max_convexity = self.declare_parameter('sign_curved_max_convexity', 0.65).value
 
         # ── Message Filters Synchronizer ─────────────────────────────────
         self.sub_rgb = message_filters.Subscriber(
@@ -101,6 +84,8 @@ class MarkerDetectorNode(Node):
             MarkerArray, '/mini_r1/mission_control/detected_objects', 10)
         self.viz_pub = self.create_publisher(
             MarkerArray, '/mini_r1/mission_control/viz_markers', 10)
+        self.sign_detection_pub = self.create_publisher(
+            String, '/mini_r1/sign_detections', 10)
         # Locked markers (first-detection only)
         self.locked_panel_markers = {}
         self.locked_viz_markers = {}
@@ -323,184 +308,95 @@ class MarkerDetectorNode(Node):
             viz_markers.markers.extend(vm_list)
 
     # ══════════════════════════════════════════════════════════════════════
-    #  Arrow / Sign Detection
+    #  Arrow / Sign Detection  (blue-first approach)
     # ══════════════════════════════════════════════════════════════════════
-    @staticmethod
-    def _angle_at_vertex(pts, i):
-        """Interior angle (degrees) at vertex i of a polygon."""
-        n = len(pts)
-        a = pts[(i - 1) % n].astype(float)
-        b = pts[i].astype(float)
-        c = pts[(i + 1) % n].astype(float)
-        ba, bc = a - b, c - b
-        cos_a = np.dot(ba, bc) / (np.linalg.norm(ba) * np.linalg.norm(bc) + 1e-8)
-        return np.degrees(np.arccos(np.clip(cos_a, -1, 1)))
+    def _classify_arrow_direction(self, contour):
+        """Classify an arrow contour's direction in image space.
+        Returns ('forward', 'left', 'right', 'rotate_180') or None.
+        Image coords: +u = right, +v = down.
+        """
+        # Convexity check for curved (rotate_180) arrows
+        hull_pts = cv2.convexHull(contour, returnPoints=True)
+        hull_area = cv2.contourArea(hull_pts)
+        cnt_area = cv2.contourArea(contour)
+        convexity = cnt_area / hull_area if hull_area > 0 else 1.0
 
-    def _find_tip_straight(self, points, convex_hull):
-        """Find tip of a straight arrow via hull defect vertices."""
-        length = len(points)
-        indices = np.setdiff1d(range(length), convex_hull)
-        if len(indices) != 2:
+        if convexity < self.sign_curved_max_convexity:
+            return 'rotate_180'
+
+        # Straight arrows: use oriented bounding box + centroid-vs-tip asymmetry
+        M = cv2.moments(contour)
+        if M["m00"] == 0:
             return None
-        for i in range(2):
-            j = (indices[i] + 2) % length
-            if np.all(points[j] == points[indices[i - 1] - 2]):
-                return tuple(points[j])
-        return None
+        cx = M["m10"] / M["m00"]
+        cy = M["m01"] / M["m00"]
 
-    def _find_tip_curved(self, approx_pts):
-        """Find tip of a curved arrow as the sharpest interior angle vertex."""
-        pts = approx_pts[:, 0, :]
-        angles = [self._angle_at_vertex(pts, i) for i in range(len(pts))]
-        min_angle = min(angles)
-        if min_angle > self.sign_curved_tip_max_angle:
-            return None, None
-        return tuple(pts[int(np.argmin(angles))]), min_angle
+        # The arrow tip is the convex hull vertex farthest from the centroid
+        hull_pts_sq = hull_pts.squeeze()
+        if hull_pts_sq.ndim != 2:
+            return None
+        dists = np.sqrt((hull_pts_sq[:, 0] - cx)**2 + (hull_pts_sq[:, 1] - cy)**2)
+        tip_idx = np.argmax(dists)
+        tip = hull_pts_sq[tip_idx]
 
-    def _detect_arrow_in_crop(self, crop_bgr):
-        """
-        Run arrow detection on a SINGLE isolated crop of a sign panel.
-        Returns (kind, contour, tip) or None.
-        crop_bgr should be in BGR format.
-        """
-        bc = self.sign_border_crop
-        h, w = crop_bgr.shape[:2]
-        if h <= 2 * bc or w <= 2 * bc:
+        # Direction vector from centroid to tip (in image space)
+        dx = tip[0] - cx
+        dy = tip[1] - cy
+        length = np.sqrt(dx*dx + dy*dy)
+        if length < 5:
             return None
 
-        inner = crop_bgr[bc:h - bc, bc:w - bc]
-        gray = cv2.cvtColor(inner, cv2.COLOR_BGR2GRAY)
-        k_size = self.sign_blur_kernel
-        blur = cv2.GaussianBlur(gray, (k_size, k_size), self.sign_blur_sigma)
-        edges = cv2.Canny(blur, self.sign_canny_low, self.sign_canny_high)
-        k = np.ones((3, 3))
-        processed = cv2.erode(
-            cv2.dilate(edges, k, iterations=self.sign_dilate_iter),
-            k, iterations=self.sign_erode_iter)
+        # Angle in image space: 0=right, 90=down, -90=up
+        angle_deg = np.degrees(np.arctan2(dy, dx))
 
-        contours, _ = cv2.findContours(processed, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
-
-        for cnt in contours:
-            area = cv2.contourArea(cnt)
-            # Relative to crop: arrow should fill at least 10% of the crop area
-            crop_area = inner.shape[0] * inner.shape[1]
-            if area < crop_area * 0.10:
-                continue
-
-            peri = cv2.arcLength(cnt, True)
-            approx = cv2.approxPolyDP(cnt, self.sign_approx_epsilon * peri, True)
-            hull = cv2.convexHull(approx, returnPoints=False)
-            sides = len(hull)
-
-            hull_pts = cv2.convexHull(cnt, returnPoints=True)
-            hull_area = cv2.contourArea(hull_pts)
-            convexity = cv2.contourArea(cnt) / hull_area if hull_area > 0 else 1.0
-
-            # Shift contour back to crop-local coordinates (add border crop offset)
-            cnt_local = cnt + bc
-
-            # Straight arrow
-            if self.sign_hull_max_sides > sides > self.sign_hull_min_sides and sides + 2 == len(approx):
-                hull_sq = hull.squeeze()
-                if hull_sq.ndim > 0:
-                    tip = self._find_tip_straight(approx[:, 0, :], hull_sq)
-                    if tip:
-                        tip_local = (tip[0] + bc, tip[1] + bc)
-                        return ('straight', cnt_local, tip_local)
-
-            # Curved arrow
-            if convexity < self.sign_curved_max_convexity:
-                tip, angle = self._find_tip_curved(approx)
-                if tip:
-                    tip_local = (tip[0] + bc, tip[1] + bc)
-                    return ('curved', cnt_local, tip_local)
-
-        return None
-
-    def _find_sign_panels(self, cv_rgb):
-        """
-        Find white rectangular sign panels in the camera image.
-        Returns list of (x, y, w, h) bounding boxes in image coordinates.
-        """
-        # Convert RGB to HSV
-        hsv = cv2.cvtColor(cv_rgb, cv2.COLOR_RGB2HSV)
-
-        # White regions: low saturation, high value
-        lower_white = np.array([0, 0, 180])
-        upper_white = np.array([180, 60, 255])
-        mask = cv2.inRange(hsv, lower_white, upper_white)
-
-        # Clean up the mask
-        k = np.ones((5, 5), np.uint8)
-        mask = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, k, iterations=2)
-        mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, k, iterations=1)
-
-        contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-
-        candidates = []
-        for cnt in contours:
-            area = cv2.contourArea(cnt)
-            if area < 400:  # too small
-                continue
-
-            x, y, w, h = cv2.boundingRect(cnt)
-            aspect = float(w) / h if h > 0 else 0
-
-            # Sign panels are roughly square (0.3m x 0.3m)
-            if aspect < 0.4 or aspect > 2.5:
-                continue
-
-            # Check that the bounding rect fills reasonably (not a weird L-shape)
-            rect_area = w * h
-            fill_ratio = area / rect_area if rect_area > 0 else 0
-            if fill_ratio < 0.5:
-                continue
-
-            candidates.append((x, y, w, h))
-
-        return candidates
+        # Classify: arrow pointing up in image = forward (away from camera)
+        if -135 < angle_deg <= -45:
+            return 'forward'
+        elif -45 < angle_deg <= 45:
+            return 'right'
+        elif 45 < angle_deg <= 135:
+            # Arrow pointing down — likely seeing a sign from behind, ignore
+            return None
+        else:
+            return 'left'
 
     def detect_signs(self, cv_rgb, cv_depth, fx, fy, cx, cy, rot, t_vec, panel_markers, viz_markers):
-        """Detect arrow signs by first isolating white panels, then running arrow detection in each crop."""
-
-        # Find white panel candidates
-        panels = self._find_sign_panels(cv_rgb)
+        """Detect arrow signs by finding blue regions first, then classifying direction."""
 
         stamp = self.get_clock().now().to_msg()
         h_depth, w_depth = cv_depth.shape[:2]
 
-        for (px, py, pw, ph) in panels:
-            # Add some margin around the detected white panel
-            margin = 10
-            x1 = max(0, px - margin)
-            y1 = max(0, py - margin)
-            x2 = min(cv_rgb.shape[1], px + pw + margin)
-            y2 = min(cv_rgb.shape[0], py + ph + margin)
+        # ── Step 1: Find blue regions in HSV ──
+        hsv = cv2.cvtColor(cv_rgb, cv2.COLOR_RGB2HSV)
+        lower = np.array([self.sign_blue_h_low, self.sign_blue_s_min, self.sign_blue_v_min])
+        upper = np.array([self.sign_blue_h_high, 255, 255])
+        blue_mask = cv2.inRange(hsv, lower, upper)
 
-            crop_rgb = cv_rgb[y1:y2, x1:x2]
-            # Convert RGB→BGR for the arrow detection (originally designed for BGR)
-            crop_bgr = cv2.cvtColor(crop_rgb, cv2.COLOR_RGB2BGR)
+        # Clean up mask
+        k = np.ones((5, 5), np.uint8)
+        blue_mask = cv2.morphologyEx(blue_mask, cv2.MORPH_CLOSE, k, iterations=2)
+        blue_mask = cv2.morphologyEx(blue_mask, cv2.MORPH_OPEN, k, iterations=1)
 
-            result = self._detect_arrow_in_crop(crop_bgr)
-            if result is None:
+        # ── Step 2: Find contours on the blue mask ──
+        contours, _ = cv2.findContours(blue_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
+
+        for cnt in contours:
+            area = cv2.contourArea(cnt)
+            if area < self.sign_min_blue_area:
                 continue
 
-            kind, cnt_local, tip_local = result
+            # ── Step 3: Classify arrow direction ──
+            direction = self._classify_arrow_direction(cnt)
+            if direction is None:
+                continue
 
-            # Convert contour & tip from crop-local to full-image coordinates
-            cnt_full = cnt_local.copy()
-            cnt_full[:, :, 0] += x1
-            cnt_full[:, :, 1] += y1
-            tip_full = (tip_local[0] + x1, tip_local[1] + y1)
-
-            # Compute centroid of the contour in image coords
-            M = cv2.moments(cnt_local)
+            # ── Step 4: Get centroid and depth ──
+            M = cv2.moments(cnt)
             if M["m00"] == 0:
                 continue
-            centroid_u = int(M["m10"] / M["m00"]) + x1
-            centroid_v = int(M["m01"] / M["m00"]) + y1
+            centroid_u = int(M["m10"] / M["m00"])
+            centroid_v = int(M["m01"] / M["m00"])
 
-            # Get depth at centroid
             if centroid_u < 0 or centroid_u >= w_depth or centroid_v < 0 or centroid_v >= h_depth:
                 continue
 
@@ -518,156 +414,69 @@ class MarkerDetectorNode(Node):
 
             depth_m = float(np.median(valid))
 
-            # 3D centroid in camera link frame
-            p_cam_centroid = self.deproject_pixel(centroid_u, centroid_v, depth_m, fx, fy, cx, cy)
-            p_odom_centroid = rot @ p_cam_centroid + t_vec
+            # ── Step 5: 3D projection ──
+            p_cam = self.deproject_pixel(centroid_u, centroid_v, depth_m, fx, fy, cx, cy)
+            p_odom = rot @ p_cam + t_vec
 
-            # Check if already locked nearby
+            # ── Step 6: Check if already locked nearby ──
             already_locked = False
-            for key, vm_list in self.locked_viz_signs.items():
-                existing = vm_list[0]  # first marker in group
-                # If LINE_STRIP is first, position is unreliable? Actually LINE_STRIP doesn't use pose.position.
-                # Oh wait, we need to check the TEXT marker or Panel marker position.
-                bz_x = self.locked_panel_signs[key].pose.position.x
-                bz_y = self.locked_panel_signs[key].pose.position.y
-                bz_z = self.locked_panel_signs[key].pose.position.z
-                
-                # Transform centroid world coords to check against panel marker coords
-                world_centroid_x = float(p_odom_centroid[0]) + self.spawn_x
-                world_centroid_y = float(p_odom_centroid[1]) + self.spawn_y
-                world_centroid_z = float(p_odom_centroid[2])
-
-                dx = bz_x - world_centroid_x
-                dy = bz_y - world_centroid_y
-                dz = bz_z - world_centroid_z
-                if (dx*dx + dy*dy + dz*dz) < 1.0:
+            world_x = float(p_odom[0]) + self.spawn_x
+            world_y = float(p_odom[1]) + self.spawn_y
+            world_z = float(p_odom[2])
+            for key in self.locked_panel_signs:
+                pm = self.locked_panel_signs[key]
+                dx = pm.pose.position.x - world_x
+                dy = pm.pose.position.y - world_y
+                if (dx*dx + dy*dy) < 1.0:
                     already_locked = True
                     break
             if already_locked:
                 continue
 
-            # ── Build 3D contour (LINE_STRIP) from contour pixels + depth ──
-            # Subsample the contour to ~80 points max for performance
-            cnt_pts = cnt_full[:, 0, :]  # shape (N, 2)
-            n_pts = len(cnt_pts)
-            step = max(1, n_pts // 80)
-            sampled_indices = list(range(0, n_pts, step))
-            # Close the loop
-            if sampled_indices[-1] != 0:
-                sampled_indices.append(0)
-
-            odom_3d_points = []
-            for idx in sampled_indices:
-                su, sv = int(cnt_pts[idx][0]), int(cnt_pts[idx][1])
-                if su < 0 or su >= w_depth or sv < 0 or sv >= h_depth:
-                    continue
-                d = float(cv_depth[sv, su])
-                if d < self.min_depth or d > self.max_depth or not np.isfinite(d):
-                    d = depth_m  # fallback to centroid depth
-                p3d = self.deproject_pixel(su, sv, d, fx, fy, cx, cy)
-                p3d_odom = rot @ p3d + t_vec
-                odom_3d_points.append(p3d_odom)
-
-            if len(odom_3d_points) < 5:
-                continue
-
-            # ── Compute arrow direction in 3D (centroid → tip) ──
-            tip_u, tip_v = int(tip_full[0]), int(tip_full[1])
-            if 0 <= tip_u < w_depth and 0 <= tip_v < h_depth:
-                d_tip = float(cv_depth[tip_v, tip_u])
-                if d_tip < self.min_depth or d_tip > self.max_depth or not np.isfinite(d_tip):
-                    d_tip = depth_m
-            else:
-                d_tip = depth_m
-            p_cam_tip = self.deproject_pixel(tip_u, tip_v, d_tip, fx, fy, cx, cy)
-            p_odom_tip = rot @ p_cam_tip + t_vec
-
-            # ── Assign unique sign ID ──
+            # ── Step 7: Create markers and publish ──
             self.sign_counter += 1
             sign_id = self.sign_counter
 
-            # Color: cyan for straight, magenta for curved
-            if kind == 'straight':
-                cr, cg, cb = 0.0, 0.9, 0.9
-            else:
-                cr, cg, cb = 0.9, 0.0, 0.9
+            # Color by direction
+            color_map = {
+                'forward': (0.0, 1.0, 0.0),
+                'left':    (1.0, 1.0, 0.0),
+                'right':   (0.0, 1.0, 1.0),
+                'rotate_180': (1.0, 0.0, 1.0),
+            }
+            cr, cg, cb = color_map.get(direction, (1.0, 1.0, 1.0))
 
-            # World coordinates for panel
-            world_x = float(p_odom_centroid[0]) + self.spawn_x
-            world_y = float(p_odom_centroid[1]) + self.spawn_y
-            world_z = float(p_odom_centroid[2])
-
-            # ── Create LINE_STRIP marker for the arrow contour shape ──
-            from geometry_msgs.msg import Point
-            contour_marker = Marker()
-            contour_marker.header.frame_id = "odom"
-            contour_marker.header.stamp = stamp
-            contour_marker.ns = "sign_contour"
-            contour_marker.id = sign_id
-            contour_marker.type = Marker.LINE_STRIP
-            contour_marker.action = Marker.ADD
-            contour_marker.scale.x = 0.008  # line thickness
-            contour_marker.color.r = float(cr)
-            contour_marker.color.g = float(cg)
-            contour_marker.color.b = float(cb)
-            contour_marker.color.a = 1.0
-            contour_marker.lifetime.sec = 0
-            for p3d in odom_3d_points:
-                pt = Point()
-                pt.x = float(p3d[0])
-                pt.y = float(p3d[1])
-                pt.z = float(p3d[2])
-                contour_marker.points.append(pt)
-
-            # ── Create ARROW marker showing direction (centroid → tip) ──
-            arrow_marker = Marker()
-            arrow_marker.header.frame_id = "odom"
-            arrow_marker.header.stamp = stamp
-            arrow_marker.ns = "sign_direction"
-            arrow_marker.id = sign_id
-            arrow_marker.type = Marker.ARROW
-            arrow_marker.action = Marker.ADD
-            arrow_marker.scale.x = 0.02   # shaft diameter
-            arrow_marker.scale.y = 0.04   # head diameter
-            arrow_marker.scale.z = 0.03   # head length
-            arrow_marker.color.r = 1.0
-            arrow_marker.color.g = 1.0
-            arrow_marker.color.b = 0.0
-            arrow_marker.color.a = 1.0
-            arrow_marker.lifetime.sec = 0
-
-            pt_start = Point()
-            pt_start.x = float(p_odom_centroid[0])
-            pt_start.y = float(p_odom_centroid[1])
-            pt_start.z = float(p_odom_centroid[2])
-            pt_end = Point()
-            pt_end.x = float(p_odom_tip[0])
-            pt_end.y = float(p_odom_tip[1])
-            pt_end.z = float(p_odom_tip[2])
-            arrow_marker.points.append(pt_start)
-            arrow_marker.points.append(pt_end)
-
-            # ── Text label ──
+            # Text label in RViz
             text_marker = self._make_marker(
                 sign_id, stamp,
-                float(p_odom_centroid[0]),
-                float(p_odom_centroid[1]),
-                float(p_odom_centroid[2]) + 0.25,
+                float(p_odom[0]), float(p_odom[1]), float(p_odom[2]) + 0.25,
                 1.0, 1.0, 1.0, lifetime=0,
                 mtype=Marker.TEXT_VIEW_FACING,
-                text=f"Sign: {kind}", ns="sign_text")
+                text=f"Sign: {direction}", ns="sign_text")
 
-            # ── Panel marker for Mission Control ──
-            new_panel = self._make_marker(
+            # Cube marker in RViz
+            viz_cube = self._make_marker(
+                sign_id, stamp,
+                float(p_odom[0]), float(p_odom[1]), float(p_odom[2]),
+                cr, cg, cb, lifetime=0, ns="sign",
+                sx=0.3, sy=0.3, sz=0.3)
+
+            # Panel marker for mission control (world coords)
+            panel_m = self._make_marker(
                 sign_id, stamp, world_x, world_y, world_z,
-                cr, cg, cb, lifetime=5, ns="sign")
+                cr, cg, cb, lifetime=5, ns="sign",
+                sx=0.3, sy=0.3, sz=0.3)
 
-            # Lock
-            self.locked_panel_signs[sign_id] = new_panel
-            self.locked_viz_signs[sign_id] = [contour_marker, arrow_marker, text_marker]
+            self.locked_panel_signs[sign_id] = panel_m
+            self.locked_viz_signs[sign_id] = [viz_cube, text_marker]
+
+            # Publish direction for navigator
+            msg = String()
+            msg.data = direction
+            self.sign_detection_pub.publish(msg)
 
             self.get_logger().info(
-                f"Sign[{kind}] #{sign_id} depth={depth_m:.2f}m "
+                f"Sign[{direction}] #{sign_id} depth={depth_m:.2f}m "
                 f"LOCKED at world=({world_x:.2f},{world_y:.2f},{world_z:.2f})")
 
         # Re-publish all locked signs every frame

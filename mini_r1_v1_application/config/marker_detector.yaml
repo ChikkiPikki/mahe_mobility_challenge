@@ -9,29 +9,15 @@ marker_detector_node:
     aruco_marker_length: 0.4      # metres (side length of the printed marker)
     aruco_box_size: 0.4           # metres (side length of the Gazebo cube)
 
-    # ── Arrow / Sign Detection ───────────────────
-    # Preprocessing
-    sign_border_crop: 20          # px to crop from each edge before processing
-    sign_blur_kernel: 5           # GaussianBlur kernel size (must be odd)
-    sign_blur_sigma: 1            # blur strength
-    sign_canny_low: 50            # Canny lower threshold
-    sign_canny_high: 50           # Canny upper threshold
-    sign_dilate_iter: 2           # dilation iterations
-    sign_erode_iter: 1            # erosion iterations
+    # ── Arrow / Sign Detection (blue-first) ──────
+    # HSV range for blue arrows (in OpenCV HSV: H 0-180, S 0-255, V 0-255)
+    # Source textures: H=110-120, S=51-255, V=188-255
+    # Wider range to account for Gazebo lighting variation
+    sign_blue_h_low: 95           # hue lower bound
+    sign_blue_h_high: 135         # hue upper bound
+    sign_blue_s_min: 80           # minimum saturation
+    sign_blue_v_min: 60           # minimum value/brightness
+    sign_min_blue_area: 400       # minimum blue contour area (px²)
 
-    # Contour filtering
-    sign_min_area: 5000           # minimum contour area (px²)
-
-    # Straight arrow
-    sign_approx_epsilon: 0.015    # approxPolyDP epsilon factor
-    sign_hull_min_sides: 4        # exclusive lower bound for hull sides
-    sign_hull_max_sides: 6        # exclusive upper bound for hull sides
-
-    # Curved arrow
-    sign_curved_max_convexity: 0.6    # max area/hull_area ratio
-    sign_curved_tip_max_angle: 60.0   # max tip angle (degrees)
-
-    # Sign panel physical size (matching Gazebo model)
-    sign_panel_width: 0.45        # metres
-    sign_panel_height: 0.45       # metres
-    sign_panel_thickness: 0.015   # metres
+    # Curved arrow (rotate_180) detection
+    sign_curved_max_convexity: 0.65   # max area/hull_area ratio (curved arrows are non-convex)
