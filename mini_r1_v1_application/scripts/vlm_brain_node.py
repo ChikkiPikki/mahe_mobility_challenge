@@ -112,6 +112,9 @@ class VLMBrainNode(Node):
         # Timer: VLM cycle
         self.create_timer(cfg.VLM_CYCLE_INTERVAL_S, self._vlm_cycle)
 
+        # Publish initial status immediately so navigator knows we're alive
+        self.create_timer(1.0, self._heartbeat)
+
         # Position logging timer (2s)
         self.create_timer(2.0, self._log_position)
 
@@ -124,6 +127,12 @@ class VLMBrainNode(Node):
 
     def _now(self):
         return self.get_clock().now().nanoseconds / 1e9
+
+    def _heartbeat(self):
+        """Publish status every second so navigator knows brain is alive."""
+        msg = String()
+        msg.data = json.dumps({"provider": "heartbeat", "reasoning": "VLM brain alive", "action": "none"})
+        self.status_pub.publish(msg)
 
     # ── Subscribers ─────────────────────────────────────────────────────
 
