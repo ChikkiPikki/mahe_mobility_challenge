@@ -310,12 +310,26 @@ class MarkerDetectorNode(Node):
     # ══════════════════════════════════════════════════════════════════════
     #  Arrow / Sign Detection  (blue-first approach)
     # ══════════════════════════════════════════════════════════════════════
+    def _has_white_surround(self, hsv_img, contour, margin=15):
+        """Check if a blue contour is surrounded by white (the sign panel)."""
+        x, y, w, h = cv2.boundingRect(contour)
+        img_h, img_w = hsv_img.shape[:2]
+        # Expand bounding box by margin
+        x1 = max(0, x - margin)
+        y1 = max(0, y - margin)
+        x2 = min(img_w, x + w + margin)
+        y2 = min(img_h, y + h + margin)
+
+        roi = hsv_img[y1:y2, x1:x2]
+        # White: low saturation, high value
+        white_mask = cv2.inRange(roi, np.array([0, 0, 170]), np.array([180, 50, 255]))
+        white_ratio = np.count_nonzero(white_mask) / (roi.shape[0] * roi.shape[1] + 1)
+        return white_ratio > 0.15  # at least 15% white surround
+
     def _classify_arrow_direction(self, contour):
         """Classify an arrow contour's direction in image space.
         Returns ('forward', 'left', 'right', 'rotate_180') or None.
-        Image coords: +u = right, +v = down.
         """
-        # Convexity check for curved (rotate_180) arrows
         hull_pts = cv2.convexHull(contour, returnPoints=True)
         hull_area = cv2.contourArea(hull_pts)
         cnt_area = cv2.contourArea(contour)
@@ -324,14 +338,12 @@ class MarkerDetectorNode(Node):
         if convexity < self.sign_curved_max_convexity:
             return 'rotate_180'
 
-        # Straight arrows: use oriented bounding box + centroid-vs-tip asymmetry
         M = cv2.moments(contour)
         if M["m00"] == 0:
             return None
         cx = M["m10"] / M["m00"]
         cy = M["m01"] / M["m00"]
 
-        # The arrow tip is the convex hull vertex farthest from the centroid
         hull_pts_sq = hull_pts.squeeze()
         if hull_pts_sq.ndim != 2:
             return None
@@ -339,29 +351,25 @@ class MarkerDetectorNode(Node):
         tip_idx = np.argmax(dists)
         tip = hull_pts_sq[tip_idx]
 
-        # Direction vector from centroid to tip (in image space)
         dx = tip[0] - cx
         dy = tip[1] - cy
         length = np.sqrt(dx*dx + dy*dy)
         if length < 5:
             return None
 
-        # Angle in image space: 0=right, 90=down, -90=up
         angle_deg = np.degrees(np.arctan2(dy, dx))
 
-        # Classify: arrow pointing up in image = forward (away from camera)
         if -135 < angle_deg <= -45:
             return 'forward'
         elif -45 < angle_deg <= 45:
             return 'right'
         elif 45 < angle_deg <= 135:
-            # Arrow pointing down — likely seeing a sign from behind, ignore
-            return None
+            return None  # pointing down = seeing sign from behind
         else:
             return 'left'
 
     def detect_signs(self, cv_rgb, cv_depth, fx, fy, cx, cy, rot, t_vec, panel_markers, viz_markers):
-        """Detect arrow signs by finding blue regions first, then classifying direction."""
+        """Detect arrow signs by finding blue regions on white panels."""
 
         stamp = self.get_clock().now().to_msg()
         h_depth, w_depth = cv_depth.shape[:2]
@@ -372,12 +380,11 @@ class MarkerDetectorNode(Node):
         upper = np.array([self.sign_blue_h_high, 255, 255])
         blue_mask = cv2.inRange(hsv, lower, upper)
 
-        # Clean up mask
         k = np.ones((5, 5), np.uint8)
         blue_mask = cv2.morphologyEx(blue_mask, cv2.MORPH_CLOSE, k, iterations=2)
         blue_mask = cv2.morphologyEx(blue_mask, cv2.MORPH_OPEN, k, iterations=1)
 
-        # ── Step 2: Find contours on the blue mask ──
+        # ── Step 2: Find contours ──
         contours, _ = cv2.findContours(blue_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
 
         for cnt in contours:
@@ -385,7 +392,22 @@ class MarkerDetectorNode(Node):
             if area < self.sign_min_blue_area:
                 continue
 
-            # ── Step 3: Classify arrow direction ──
+            # ── Step 3: Validate — blue must be on a white sign panel ──
+            if not self._has_white_surround(hsv, cnt):
+                continue
+
+            # ── Step 4: Shape validation — reject floor tiles / large blobs ──
+            x, y, w, h = cv2.boundingRect(cnt)
+            bbox_area = w * h
+            # Arrow should fill 20-85% of its bbox (not a solid rectangle)
+            fill_ratio = area / bbox_area if bbox_area > 0 else 0
+            if fill_ratio > 0.85 or fill_ratio < 0.15:
+                continue
+            # Reject very large blobs (floor tiles) — sign is small in the image
+            if bbox_area > (h_depth * w_depth * 0.15):
+                continue
+
+            # ── Step 5: Classify arrow direction ──
             direction = self._classify_arrow_direction(cnt)
             if direction is None:
                 continue
