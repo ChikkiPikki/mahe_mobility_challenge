@@ -92,10 +92,12 @@ if [ "$START_VLM" = true ]; then
         if [ -n "$VLLM_PYTHON" ]; then
             $VLLM_PYTHON -m vllm.entrypoints.openai.api_server \
                 --model Qwen/Qwen2.5-VL-3B-Instruct \
-                --max-model-len 4096 \
-                --gpu-memory-utilization 0.5 \
+                --max-model-len 1024 \
+                --gpu-memory-utilization 0.90 \
                 --port 8000 \
                 --trust-remote-code \
+                --dtype half \
+                --enforce-eager \
                 2>&1 | sed 's/^/  [vLLM] /' &
             VLLM_PID=$!
             echo -e "${YELLOW}Waiting for vLLM...${NC}"

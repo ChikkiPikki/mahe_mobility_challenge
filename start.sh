@@ -25,8 +25,8 @@ set -e
 # ── Configuration ───────────────────────────────────────────────────────
 VLLM_MODEL="Qwen/Qwen2.5-VL-3B-Instruct"
 VLLM_PORT=8000
-VLLM_MAX_LEN=4096
-VLLM_GPU_UTIL=0.5
+VLLM_MAX_LEN=1024
+VLLM_GPU_UTIL=0.90
 DOCKER_IMAGE="mini_r1_jazzy"
 CONTAINER_NAME="openbot"
 SRC_DIR="$(cd "$(dirname "$0")" && pwd)"
@@ -101,6 +101,8 @@ start_vllm() {
         --gpu-memory-utilization "$VLLM_GPU_UTIL" \
         --port "$VLLM_PORT" \
         --trust-remote-code \
+        --dtype half \
+        --enforce-eager \
         2>&1 | sed 's/^/  [vLLM] /' &
     VLLM_PID=$!
 
