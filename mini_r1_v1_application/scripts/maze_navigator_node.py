@@ -33,9 +33,6 @@ class MazeNavigatorNode(Node):
     def __init__(self):
         super().__init__('maze_navigator_node')
 
-        # Use sim time
-        self.declare_parameter('use_sim_time', True)
-
         # Load behavior config
         config_path = self.declare_parameter(
             'behavior_config', '').value

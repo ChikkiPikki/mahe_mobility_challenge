@@ -5,11 +5,6 @@ Panels:
     Name: MissionControlPanel
   - Class: mini_r1_v1_application/NavigatorStatusPanel
     Name: NavigatorStatus
-  - Class: rviz_common/Views
-    Expanded:
-      - /Current View1
-    Name: Views
-    Splitter Ratio: 0.5
 Visualization Manager:
   Class: ""
   Displays:
