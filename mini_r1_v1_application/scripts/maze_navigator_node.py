@@ -197,15 +197,6 @@ class MazeNavigatorNode(Node):
         self.update_odom()
         now = self._now_sec()
 
-        # Don't drive until VLM brain connects
-        if not self._vlm_connected:
-            self.cmd_pub.publish(Twist())
-            if int(now) % 5 == 0:
-                self.get_logger().info(
-                    "Waiting for VLM brain to connect...",
-                    throttle_duration_sec=5.0)
-            return
-
         # Safety: don't drive if we've never received odom
         if self.ss.odom_stamp == 0:
             self.cmd_pub.publish(Twist())
