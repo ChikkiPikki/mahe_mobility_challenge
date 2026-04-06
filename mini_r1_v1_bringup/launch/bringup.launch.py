@@ -190,6 +190,6 @@ def generate_launch_description():
         mission_zone,
         dynamic_obstacles,
         maze_navigator,
-        TimerAction(period=20.0, actions=[vlm_brain]),  # delay VLM brain 20s for sim to stabilize
+        vlm_brain,
     ])
 
