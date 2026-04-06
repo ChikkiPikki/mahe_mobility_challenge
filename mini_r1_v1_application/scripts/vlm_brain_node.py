@@ -439,8 +439,9 @@ class NavigationBrain(Node):
         action = cmd.get("action", "stop")
 
         # Map VLM actions to navigator behaviors
+        # "forward" uses gap_follow (has LiDAR wall avoidance) not raw move_forward
         behavior_map = {
-            "forward": "move_forward",
+            "forward": "gap_follow",
             "left": "turn_left_90",
             "right": "turn_right_90",
             "backward": "reverse",
