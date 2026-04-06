@@ -237,10 +237,15 @@ class MarkerDetectorNode(Node):
         stamp = self.get_clock().now().to_msg()
         camera_matrix = np.array([[fx, 0, cx], [0, fy, cy], [0, 0, 1]], dtype=np.float64)
         dist_coeffs = np.zeros((4, 1))
-        rvecs, tvecs, _ = cv2.aruco.estimatePoseSingleMarkers(
-            corners, self.aruco_marker_length, camera_matrix, dist_coeffs)
-        if rvecs is None or tvecs is None:
-            return
+
+        # estimatePoseSingleMarkers removed in OpenCV 4.8+, use solvePnP per marker
+        half_len = self.aruco_marker_length / 2.0
+        obj_points = np.array([
+            [-half_len,  half_len, 0],
+            [ half_len,  half_len, 0],
+            [ half_len, -half_len, 0],
+            [-half_len, -half_len, 0],
+        ], dtype=np.float32)
 
         for i, marker_id_arr in enumerate(ids):
             marker_id = int(marker_id_arr[0])
@@ -252,6 +257,11 @@ class MarkerDetectorNode(Node):
             c = corners[i][0]
             area = cv2.contourArea(c)
             if area < self.min_marker_area_px:
+                continue
+
+            success, rvec, tvec = cv2.solvePnP(
+                obj_points, c, camera_matrix, dist_coeffs)
+            if not success:
                 continue
 
             center_u = int(c[:, 0].mean())
@@ -271,8 +281,8 @@ class MarkerDetectorNode(Node):
                 continue
 
             depth_m_real = float(np.median(valid_depths))
-            rvec = rvecs[i][0]
-            rmat, _ = cv2.Rodrigues(rvec)
+            rvec_flat = rvec.flatten()
+            rmat, _ = cv2.Rodrigues(rvec_flat)
             R_opt2link = np.array([[0, 0, 1], [-1, 0, 0], [0, -1, 0]], dtype=np.float64)
             p_cam_face = self.deproject_pixel(center_u, center_v, depth_m_real, fx, fy, cx, cy)
             R_marker2cam = R_opt2link @ rmat
@@ -477,20 +487,15 @@ class MarkerDetectorNode(Node):
                 world_y = float(p_odom[1]) + self.spawn_y
                 world_z = float(p_odom[2])
 
-                # Dedup: skip if within 0.6m AND same direction type
+                # Dedup: skip if ANY sign within 0.5m (prevents duplicates)
                 already_locked = False
                 for key in self.locked_panel_signs:
                     pm = self.locked_panel_signs[key]
                     ddx = pm.pose.position.x - world_x
                     ddy = pm.pose.position.y - world_y
-                    dist_sq = ddx*ddx + ddy*ddy
-                    if dist_sq < 0.36:  # 0.6m radius
-                        for vm in self.locked_viz_signs.get(key, []):
-                            if vm.type == Marker.TEXT_VIEW_FACING and direction in vm.text:
-                                already_locked = True
-                                break
-                        if already_locked:
-                            break
+                    if (ddx*ddx + ddy*ddy) < 0.25:  # 0.5m radius
+                        already_locked = True
+                        break
                 if already_locked:
                     continue
 
