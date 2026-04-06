@@ -233,6 +233,31 @@ class ConfigStateMachine:
         return self.recovery_step_idx >= len(steps) and \
                self.recovery_step_behavior is None
 
+    # ── VLM Override Methods ──────────────────────────────────────────────
+    def force_behavior(self, name, ss):
+        """VLM brain forces a specific behavior, interrupting current state."""
+        if name not in self.behaviors:
+            self.logger.warn(f"VLM requested unknown behavior: {name}")
+            return
+        self.current_state = 'EXECUTING_SIGN'  # reuse this state
+        self.state_enter_time = ss.now()
+        self.current_behavior = self.behaviors[name]
+        self.current_behavior.reset()
+        self.current_behavior.start(ss)
+        self.reasoning = f"VLM override: executing '{name}'"
+        self.logger.info(f"VLM force_behavior: {name}")
+
+    def force_recovery(self, name, ss):
+        """VLM brain forces a recovery strategy."""
+        if name not in self.recovery_strategies:
+            self.logger.warn(f"VLM requested unknown recovery: {name}")
+            return
+        self.current_state = 'RECOVERING'
+        self.state_enter_time = ss.now()
+        self._start_recovery(name, ss)
+        self.reasoning = f"VLM override: recovery '{name}'"
+        self.logger.info(f"VLM force_recovery: {name}")
+
     def get_status_json(self, ss: SensorState) -> str:
         det_status = {}
         for name, det in self.detectors.items():

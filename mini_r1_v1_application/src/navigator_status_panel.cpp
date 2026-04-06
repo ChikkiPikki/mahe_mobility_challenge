@@ -66,15 +66,47 @@ NavigatorStatusPanel::NavigatorStatusPanel(QWidget * parent)
 
   reasoning_text_ = new QTextEdit();
   reasoning_text_->setReadOnly(true);
-  reasoning_text_->setMaximumHeight(60);
+  reasoning_text_->setMaximumHeight(50);
   reasoning_text_->setFont(mono_font);
   reasoning_text_->setStyleSheet("background-color: #1a1a2e; color: #e0e0e0; padding: 4px;");
   layout->addWidget(reasoning_text_);
+
+  // ── VLM Brain Section ──
+  QFrame * line4 = new QFrame();
+  line4->setFrameShape(QFrame::HLine);
+  layout->addWidget(line4);
+
+  QLabel * vlm_header = new QLabel("VLM Brain:");
+  vlm_header->setFont(bold_font);
+  vlm_header->setStyleSheet("color: #d29922;");
+  layout->addWidget(vlm_header);
+
+  vlm_provider_label_ = new QLabel("Provider: waiting...");
+  vlm_provider_label_->setFont(mono_font);
+  layout->addWidget(vlm_provider_label_);
+
+  vlm_action_label_ = new QLabel("Action: —");
+  vlm_action_label_->setFont(mono_font);
+  layout->addWidget(vlm_action_label_);
+
+  vlm_tools_label_ = new QLabel("Tools: —");
+  vlm_tools_label_->setFont(mono_font);
+  vlm_tools_label_->setWordWrap(true);
+  layout->addWidget(vlm_tools_label_);
+
+  vlm_reasoning_text_ = new QTextEdit();
+  vlm_reasoning_text_->setReadOnly(true);
+  vlm_reasoning_text_->setMaximumHeight(60);
+  vlm_reasoning_text_->setFont(mono_font);
+  vlm_reasoning_text_->setStyleSheet("background-color: #1a1a2e; color: #d29922; padding: 4px;");
+  layout->addWidget(vlm_reasoning_text_);
 
   setLayout(layout);
 
   connect(this, &NavigatorStatusPanel::statusReceived,
           this, &NavigatorStatusPanel::updateDisplay, Qt::QueuedConnection);
+  connect(this, &NavigatorStatusPanel::vlmStatusReceived,
+          this, &NavigatorStatusPanel::updateVLMDisplay, Qt::QueuedConnection);
 }
 
 NavigatorStatusPanel::~NavigatorStatusPanel() {}
@@ -85,6 +117,9 @@ void NavigatorStatusPanel::onInitialize()
   sub_status_ = node_->create_subscription<std_msgs::msg::String>(
     "/mini_r1/navigator/status", 10,
     std::bind(&NavigatorStatusPanel::statusCallback, this, std::placeholders::_1));
+  sub_vlm_ = node_->create_subscription<std_msgs::msg::String>(
+    "/vlm_brain/status", 10,
+    std::bind(&NavigatorStatusPanel::vlmCallback, this, std::placeholders::_1));
 }
 
 void NavigatorStatusPanel::statusCallback(const std_msgs::msg::String::SharedPtr msg)
@@ -167,6 +202,44 @@ void NavigatorStatusPanel::updateDisplay(const QString & json_str)
 
   // Reasoning
   reasoning_text_->setText(obj["reasoning"].toString("..."));
+}
+
+void NavigatorStatusPanel::vlmCallback(const std_msgs::msg::String::SharedPtr msg)
+{
+  Q_EMIT vlmStatusReceived(QString::fromStdString(msg->data));
+}
+
+void NavigatorStatusPanel::updateVLMDisplay(const QString & json_str)
+{
+  QJsonDocument doc = QJsonDocument::fromJson(json_str.toUtf8());
+  if (!doc.isObject()) return;
+  QJsonObject obj = doc.object();
+
+  QString provider = obj["provider"].toString("?");
+  vlm_provider_label_->setText("Provider: " + provider);
+
+  QString action = obj["action"].toString("none");
+  QJsonObject args = obj["action_args"].toObject();
+  QString args_str = args.isEmpty() ? "" : " → " + QJsonDocument(args).toJson(QJsonDocument::Compact);
+  vlm_action_label_->setText("Action: " + action + args_str);
+
+  // Color code action
+  if (action == "execute_behavior") {
+    vlm_action_label_->setStyleSheet("color: #d29922;");
+  } else if (action == "execute_recovery") {
+    vlm_action_label_->setStyleSheet("color: #f85149;");
+  } else {
+    vlm_action_label_->setStyleSheet("color: #8b949e;");
+  }
+
+  // Tool calls
+  QJsonArray tools = obj["tool_calls"].toArray();
+  QStringList tool_list;
+  for (const auto & t : tools) tool_list << t.toString();
+  vlm_tools_label_->setText("Tools: " + (tool_list.isEmpty() ? "none" : tool_list.join(", ")));
+
+  // VLM reasoning
+  vlm_reasoning_text_->setText(obj["reasoning"].toString("..."));
 }
 
 }  // namespace mini_r1_v1_application

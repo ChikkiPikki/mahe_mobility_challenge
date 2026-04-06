@@ -71,12 +71,29 @@ install(PROGRAMS
   scripts/mission_zone_node.py
   scripts/dynamic_obstacle_node.py
   scripts/maze_navigator_node.py
+  scripts/vlm_brain_node.py
+  scripts/vlm_dashboard.py
   DESTINATION lib/${PROJECT_NAME}
+)
+
+# Install VLM support files alongside scripts
+install(FILES
+  scripts/vlm_tools.py
+  scripts/vlm_config.py
+  DESTINATION lib/${PROJECT_NAME}
+)
+install(DIRECTORY scripts/vlm_static/
+  DESTINATION lib/${PROJECT_NAME}/vlm_static
 )
 
 # Install nav_lib Python package alongside the scripts
 install(DIRECTORY scripts/nav_lib/
   DESTINATION lib/${PROJECT_NAME}/nav_lib
+)
+
+# Install prompts
+install(DIRECTORY prompts/
+  DESTINATION share/${PROJECT_NAME}/prompts
 )
 
 # Install config files

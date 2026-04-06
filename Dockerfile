@@ -4,18 +4,21 @@
 # Build (from the repo root):
 #   docker build -t mini_r1_jazzy .
 #
-# Run (GPU + display forwarding):
+# Run (GPU + display + host network for VLM access):
 #   xhost +local:docker
 #   docker run -it --rm \
 #     --hostname openbot \
 #     --name openbot \
+#     --network=host \
 #     --runtime=nvidia \
 #     --env DISPLAY=$DISPLAY \
 #     --env QT_X11_NO_MITSHM=1 \
 #     --volume /tmp/.X11-unix:/tmp/.X11-unix:rw \
+#     --volume /path/to/src:/home/dev/ros2_ws/src \
 #     --device /dev/dri \
-#     --group-add $(getent group render | cut -d: -f3) \
 #     mini_r1_jazzy
+#
+# Or use ./start.sh for one-command launch (starts vLLM + Docker + ROS2)
 ###############################################################################
 
 FROM osrf/ros:jazzy-desktop
@@ -108,7 +111,11 @@ RUN pip3 install --no-cache-dir --break-system-packages \
     torch torchvision --index-url https://download.pytorch.org/whl/cu121 \
     && pip3 install --no-cache-dir --break-system-packages \
     ultralytics \
-    opencv-python-headless>=4.10
+    opencv-python-headless>=4.10 \
+    openai \
+    python-dotenv \
+    fastapi \
+    "uvicorn[standard]"
 
 # ── Initialise rosdep ──────────────────────────────────────────────────
 RUN if [ ! -f /etc/ros/rosdep/sources.list.d/20-default.list ]; then \

@@ -76,6 +76,13 @@ class MazeNavigatorNode(Node):
         self.cmd_pub = self.create_publisher(Twist, '/cmd_vel', 10)
         self.status_pub = self.create_publisher(String, '/mini_r1/navigator/status', 10)
 
+        # VLM override subscriber
+        self.create_subscription(
+            String, '/vlm_brain/command',
+            self.vlm_command_cb, 10)
+        self._vlm_override_time = 0.0
+        self._vlm_override_timeout = 10.0  # seconds — auto-release if VLM silent
+
         # Timer for main loop
         rate_hz = self.thresholds.get('command_rate_hz', 20)
         self.create_timer(1.0 / rate_hz, self.tick)
@@ -118,6 +125,33 @@ class MazeNavigatorNode(Node):
         self.ss.lidar_angle_min = msg.angle_min
         self.ss.lidar_angle_increment = msg.angle_increment
         self.ss.lidar_stamp = self._now_sec()
+
+    def vlm_command_cb(self, msg: String):
+        """Handle VLM brain override commands."""
+        try:
+            import json as _json
+            cmd = _json.loads(msg.data)
+        except Exception:
+            return
+
+        now = self._now_sec()
+        self._vlm_override_time = now
+        action = cmd.get('action', 'continue')
+
+        if action == 'execute_behavior':
+            name = cmd.get('action_args', {}).get('name', '')
+            if name:
+                self.sm.force_behavior(name, self.ss)
+                self.get_logger().info(f"VLM override: behavior '{name}'")
+        elif action == 'execute_recovery':
+            name = cmd.get('action_args', {}).get('name', '')
+            if name:
+                self.sm.force_recovery(name, self.ss)
+                self.get_logger().info(f"VLM override: recovery '{name}'")
+        elif action == 'set_speed_profile':
+            name = cmd.get('action_args', {}).get('name', '')
+            self.get_logger().info(f"VLM speed profile: '{name}'")
+        # 'continue' = no-op, state machine keeps going
 
     def marker_cb(self, msg: MarkerArray):
         for m in msg.markers:

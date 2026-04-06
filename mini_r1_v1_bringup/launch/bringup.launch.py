@@ -169,6 +169,15 @@ def generate_launch_description():
         }]
     )
 
+    # 9. VLM Brain Node: supervisory intelligence (optional)
+    vlm_brain = Node(
+        package='mini_r1_v1_application',
+        executable='vlm_brain_node.py',
+        name='vlm_brain_node',
+        output='screen',
+        parameters=[{'use_sim_time': True}],
+    )
+
     return LaunchDescription([
         sim_launch,
         tf_lidar,
@@ -181,5 +190,6 @@ def generate_launch_description():
         mission_zone,
         dynamic_obstacles,
         maze_navigator,
+        vlm_brain,
     ])
 

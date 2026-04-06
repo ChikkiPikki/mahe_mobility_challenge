@@ -1,9 +1,21 @@
-# Docker Setup — Mini R1 v1 (ROS 2 Jazzy + Gazebo Harmonic)
+# Docker + VLM Setup — Mini R1 v1
+
+## Quick Start (one command)
+
+```bash
+./start.sh
+```
+
+This starts the vLLM server on the host, launches the Docker container, builds the workspace, and runs the full stack. See below for manual setup.
+
+---
 
 ## Prerequisites
 
-- Docker Engine installed ([docs.docker.com/engine/install](https://docs.docker.com/engine/install/ubuntu/))
-- NVIDIA GPU with drivers installed (verify with `nvidia-smi`)
+- Docker Engine ([docs.docker.com/engine/install](https://docs.docker.com/engine/install/ubuntu/))
+- NVIDIA GPU with drivers (`nvidia-smi`)
+- NVIDIA Container Toolkit (see below)
+- Python 3.10+ with pip on the host
 
 ## 1. Install NVIDIA Container Toolkit
 
@@ -17,20 +29,56 @@ curl -s -L https://nvidia.github.io/libnvidia-container/stable/deb/nvidia-contai
 
 sudo apt-get update
 sudo apt-get install -y nvidia-container-toolkit
-
 sudo nvidia-ctk runtime configure --runtime=docker
 sudo systemctl restart docker
 ```
 
-Verify: `docker run --rm --gpus all nvidia/cuda:12.0.0-base-ubuntu22.04 nvidia-smi`
+## 2. Set Up Local VLM (on host, not Docker)
 
-## 2. Build the Image
+The VLM runs on the **host machine** so it doesn't compete with Gazebo for GPU memory. The Docker container connects to it via `--network=host`.
+
+```bash
+# Install vLLM (one-time)
+pip install vllm qwen-vl-utils
+
+# Download the model (one-time, ~7GB)
+huggingface-cli download Qwen/Qwen2.5-VL-3B-Instruct
+
+# Start the server (every session)
+python -m vllm.entrypoints.openai.api_server \
+  --model Qwen/Qwen2.5-VL-3B-Instruct \
+  --max-model-len 4096 \
+  --gpu-memory-utilization 0.5 \
+  --port 8000 \
+  --trust-remote-code
+
+# Verify:
+curl http://localhost:8000/v1/models
+```
+
+The server provides an OpenAI-compatible API at `http://localhost:8000/v1`.
+
+### Using Cloud APIs Instead (no local GPU needed)
+
+Create a `.env` file in the repo root:
+```bash
+# NVIDIA NIM (recommended):
+NVIDIA_API_KEY=nvapi-xxxxxxxx
+
+# OR OpenRouter (free tier):
+OPENROUTER_API_KEY=sk-or-xxxxxxxx
+
+# Disable local VLM:
+LOCAL_VLM_ENABLED=false
+```
+
+## 3. Build the Docker Image
 
 ```bash
 docker build -t mini_r1_jazzy .
 ```
 
-## 3. Run the Container
+## 4. Run the Container
 
 ```bash
 xhost +local:docker
@@ -38,26 +86,29 @@ xhost +local:docker
 docker run -it --rm \
   --hostname openbot \
   --name openbot \
+  --network=host \
   --runtime=nvidia \
   --env DISPLAY=$DISPLAY \
   --env QT_X11_NO_MITSHM=1 \
   --volume /tmp/.X11-unix:/tmp/.X11-unix:rw \
+  --volume $(pwd):/home/dev/ros2_ws/src \
   --device /dev/dri \
-  --group-add $(getent group render | cut -d: -f3) \
   mini_r1_jazzy
 ```
 
-| Flag | Purpose |
-|------|---------|
-| `--runtime=nvidia` | Uses NVIDIA container runtime (mounts GPU drivers + EGL/GL libraries) |
-| `--device /dev/dri` | Grants access to the GPU's DRI device |
-| `--group-add $(...)` | Adds host's `render` group so the container user can access `/dev/dri` |
+**`--network=host`** is critical — it lets the container access the host's vLLM server at `localhost:8000`.
 
-## 4. Inside the Container
+## 5. Inside the Container
 
 ```bash
+colcon build --symlink-install
+source install/setup.bash
 ros2 launch mini_r1_v1_bringup bringup.launch.py
 ```
+
+## 6. VLM Dashboard
+
+Open `http://localhost:8765` in a browser to see real-time VLM reasoning, tool calls, and robot state.
 
 ## Troubleshooting
 
@@ -65,7 +116,11 @@ ros2 launch mini_r1_v1_bringup bringup.launch.py
 Install the NVIDIA Container Toolkit (Step 1).
 
 ### `cannot open display`
-Run `xhost +local:docker` on the host before starting the container.
+Run `xhost +local:docker` on the host.
 
-### `llvmpipe` in glxinfo (software rendering)
-The `--runtime=nvidia` and PRIME env vars in the Dockerfile should handle this. Verify with `glxinfo | grep renderer` inside the container.
+### VLM not connecting
+Verify vLLM is running: `curl http://localhost:8000/v1/models`
+Container must use `--network=host`.
+
+### `llvmpipe` in glxinfo
+The `--runtime=nvidia` and PRIME env vars handle this. Verify: `glxinfo | grep renderer`

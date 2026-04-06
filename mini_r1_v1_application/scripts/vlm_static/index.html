@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Mini R1 — VLM Brain Dashboard</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: #0d1117; color: #c9d1d9; font-family: 'Segoe UI', monospace; padding: 16px; }
+  h1 { color: #58a6ff; font-size: 18px; margin-bottom: 12px; }
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .card { background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 12px; }
+  .card h2 { color: #8b949e; font-size: 12px; text-transform: uppercase; margin-bottom: 8px; }
+  .val { color: #58a6ff; font-size: 14px; }
+  .reasoning { color: #f0f6fc; font-size: 13px; line-height: 1.5; white-space: pre-wrap;
+    background: #0d1117; padding: 8px; border-radius: 4px; max-height: 120px; overflow-y: auto; }
+  .action-tag { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 12px; font-weight: bold; }
+  .action-continue { background: #238636; color: #fff; }
+  .action-execute_behavior { background: #d29922; color: #000; }
+  .action-execute_recovery { background: #f85149; color: #fff; }
+  .detector { margin: 2px 0; font-size: 12px; }
+  .detector.active { color: #f85149; font-weight: bold; }
+  .detector.clear { color: #484f58; }
+  .tool-result { font-size: 11px; color: #8b949e; margin: 2px 0; }
+  #log { font-size: 11px; color: #8b949e; max-height: 200px; overflow-y: auto;
+    background: #0d1117; padding: 8px; border-radius: 4px; }
+  .status-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; }
+  .dot-green { background: #3fb950; }
+  .dot-red { background: #f85149; }
+  .dot-yellow { background: #d29922; }
+</style>
+</head>
+<body>
+<h1>Mini R1 — VLM Brain Dashboard</h1>
+<div class="grid">
+
+  <div class="card">
+    <h2>VLM Status</h2>
+    <div><span class="status-dot" id="conn-dot"></span><span id="provider">disconnected</span></div>
+    <div style="margin-top:8px">Action: <span class="action-tag" id="action">—</span></div>
+    <div id="action-args" style="font-size:11px;color:#8b949e;margin-top:4px"></div>
+  </div>
+
+  <div class="card">
+    <h2>Navigator</h2>
+    <div>State: <span class="val" id="nav-state">—</span></div>
+    <div>Behavior: <span class="val" id="nav-behavior">—</span></div>
+    <div>ArUco: <span class="val" id="arucos">—</span></div>
+  </div>
+
+  <div class="card" style="grid-column: 1 / -1;">
+    <h2>Reasoning</h2>
+    <div class="reasoning" id="reasoning">Waiting for VLM...</div>
+  </div>
+
+  <div class="card">
+    <h2>Observation</h2>
+    <div class="reasoning" id="observation" style="max-height:80px">—</div>
+  </div>
+
+  <div class="card">
+    <h2>Tool Results</h2>
+    <div id="tool-results">—</div>
+  </div>
+
+  <div class="card">
+    <h2>Position</h2>
+    <div id="position">—</div>
+  </div>
+
+  <div class="card">
+    <h2>Requested Tools</h2>
+    <div id="tool-calls" style="font-size:12px">—</div>
+  </div>
+
+  <div class="card" style="grid-column: 1 / -1;">
+    <h2>Log</h2>
+    <div id="log"></div>
+  </div>
+
+</div>
+
+<script>
+const ws = new WebSocket(`ws://${location.host}/ws`);
+const log = document.getElementById('log');
+
+ws.onopen = () => {
+  document.getElementById('conn-dot').className = 'status-dot dot-green';
+  addLog('Connected to dashboard');
+};
+ws.onclose = () => {
+  document.getElementById('conn-dot').className = 'status-dot dot-red';
+  addLog('Disconnected');
+};
+
+ws.onmessage = (e) => {
+  const d = JSON.parse(e.data);
+  if (d.type === 'vlm_status') updateVLM(d);
+  if (d.type === 'navigator_status') updateNav(d);
+};
+
+function updateVLM(d) {
+  document.getElementById('provider').textContent = d.provider || '?';
+  const actionEl = document.getElementById('action');
+  actionEl.textContent = d.action || 'none';
+  actionEl.className = 'action-tag action-' + (d.action || 'continue');
+  document.getElementById('action-args').textContent = JSON.stringify(d.action_args || {});
+  document.getElementById('reasoning').textContent = d.reasoning || '—';
+  document.getElementById('observation').textContent = d.observation || '—';
+  document.getElementById('arucos').textContent = (d.arucos || []).join(', ') || 'none';
+
+  const pos = d.position || {};
+  document.getElementById('position').textContent =
+    `(${pos.x || 0}, ${pos.y || 0}) yaw=${pos.yaw_deg || 0}°`;
+
+  const tcEl = document.getElementById('tool-calls');
+  tcEl.textContent = (d.tool_calls || []).join(', ') || 'none';
+
+  const trEl = document.getElementById('tool-results');
+  const tr = d.tool_results || {};
+  trEl.innerHTML = Object.keys(tr).length ?
+    Object.entries(tr).map(([k,v]) => `<div class="tool-result">${k}: ${v}</div>`).join('') : '—';
+
+  addLog(`[${d.provider}] ${d.action}: ${(d.reasoning || '').substring(0, 80)}`);
+}
+
+function updateNav(d) {
+  document.getElementById('nav-state').textContent = d.state || '?';
+  document.getElementById('nav-behavior').textContent = d.behavior || '?';
+}
+
+function addLog(text) {
+  const line = document.createElement('div');
+  line.textContent = new Date().toLocaleTimeString() + ' ' + text;
+  log.prepend(line);
+  while (log.children.length > 50) log.removeChild(log.lastChild);
+}
+</script>
+</body>
+</html>
