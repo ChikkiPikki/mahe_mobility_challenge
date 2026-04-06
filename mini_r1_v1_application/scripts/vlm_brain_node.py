@@ -171,6 +171,42 @@ class NavigationBrain(Node):
     def _save_frame_to_history(self, frame_b64: str):
         self._frame_history.append(frame_b64)
 
+    def _build_composite_frame(self, current_b64: str) -> str:
+        """Stitch current + past frames into one labeled image.
+        Layout: [PAST 2 | PAST 1 | CURRENT] side-by-side with labels."""
+        def b64_to_cv(b64_str):
+            data = base64.b64decode(b64_str)
+            arr = np.frombuffer(data, dtype=np.uint8)
+            return cv2.imdecode(arr, cv2.IMREAD_COLOR)
+
+        current_img = b64_to_cv(current_b64)
+        h, w = current_img.shape[:2]
+
+        # Label current frame
+        cv2.putText(current_img, "NOW", (10, 25),
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0), 2)
+
+        frames = []
+        past = list(self._frame_history)
+        for i, past_b64 in enumerate(past):
+            img = b64_to_cv(past_b64)
+            img = cv2.resize(img, (w, h))
+            label = f"-{(len(past)-i)*3}s"
+            cv2.putText(img, label, (10, 25),
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 165, 255), 2)
+            frames.append(img)
+
+        frames.append(current_img)
+
+        if len(frames) == 1:
+            composite = frames[0]
+        else:
+            composite = np.hstack(frames)
+
+        _, buf = cv2.imencode('.jpg', composite,
+                              [cv2.IMWRITE_JPEG_QUALITY, config.JPEG_QUALITY])
+        return base64.b64encode(buf).decode('utf-8')
+
     def get_odom(self):
         with self._lock:
             return self._odom_x, self._odom_y, self._odom_theta
@@ -316,26 +352,16 @@ class NavigationBrain(Node):
             if line.strip():
                 self.get_logger().info(f"  CTX: {line}")
 
-        # Build image content: current + up to 2 past frames
+        # Build single composite image: stitch current + past frames side-by-side
+        # (NVIDIA NIM only allows 1 image per request)
+        composite_b64 = self._build_composite_frame(frame_b64)
+        self._save_frame_to_history(frame_b64)
+
         image_content = [
             {"type": "text", "text": prompt},
             {"type": "image_url", "image_url": {
-                "url": f"data:image/jpeg;base64,{frame_b64}"},
-             },
+                "url": f"data:image/jpeg;base64,{composite_b64}"}},
         ]
-        # Add past frames for temporal awareness
-        for i, past_frame in enumerate(reversed(list(self._frame_history))):
-            image_content.insert(1, {  # insert before current frame
-                "type": "text",
-                "text": f"[Previous frame {i+1}, ~{(i+1)*3}s ago]"
-            })
-            image_content.insert(2, {
-                "type": "image_url",
-                "image_url": {"url": f"data:image/jpeg;base64,{past_frame}"}
-            })
-
-        # Save current frame to history for next cycle
-        self._save_frame_to_history(frame_b64)
 
         # ── Call providers ──
         providers = []
