@@ -81,7 +81,13 @@ class MazeNavigatorNode(Node):
             String, '/vlm_brain/command',
             self.vlm_command_cb, 10)
         self._vlm_override_time = 0.0
-        self._vlm_override_timeout = 10.0  # seconds — auto-release if VLM silent
+        self._vlm_override_timeout = 10.0
+
+        # Wait for VLM brain to connect before moving
+        self._vlm_connected = False
+        self.create_subscription(
+            String, '/vlm_brain/status',
+            self._vlm_status_cb, 10)
 
         # Timer for main loop
         rate_hz = self.thresholds.get('command_rate_hz', 20)
@@ -125,6 +131,11 @@ class MazeNavigatorNode(Node):
         self.ss.lidar_angle_min = msg.angle_min
         self.ss.lidar_angle_increment = msg.angle_increment
         self.ss.lidar_stamp = self._now_sec()
+
+    def _vlm_status_cb(self, msg: String):
+        if not self._vlm_connected:
+            self._vlm_connected = True
+            self.get_logger().info("VLM brain connected — navigation enabled.")
 
     def vlm_command_cb(self, msg: String):
         """Handle VLM brain override commands."""
@@ -185,6 +196,15 @@ class MazeNavigatorNode(Node):
     def tick(self):
         self.update_odom()
         now = self._now_sec()
+
+        # Don't drive until VLM brain connects
+        if not self._vlm_connected:
+            self.cmd_pub.publish(Twist())
+            if int(now) % 5 == 0:
+                self.get_logger().info(
+                    "Waiting for VLM brain to connect...",
+                    throttle_duration_sec=5.0)
+            return
 
         # Safety: don't drive if we've never received odom
         if self.ss.odom_stamp == 0:
