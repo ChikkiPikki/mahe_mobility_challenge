@@ -1,8 +1,10 @@
 """VLM Brain configuration — API providers, model settings, tool params."""
 import os
-from dotenv import load_dotenv
-
-load_dotenv(os.path.join(os.path.dirname(__file__), '..', '..', '.env'))
+try:
+    from dotenv import load_dotenv
+    load_dotenv(os.path.join(os.path.dirname(__file__), '..', '..', '.env'))
+except ImportError:
+    pass  # python-dotenv not installed, use env vars directly
 
 # ── Local VLM (Ollama on host, Docker connects via --network=host) ──────
 LOCAL_VLM_ENABLED = os.getenv("LOCAL_VLM_ENABLED", "true").lower() == "true"
