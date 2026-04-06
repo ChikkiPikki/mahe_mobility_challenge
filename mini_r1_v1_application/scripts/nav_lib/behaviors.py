@@ -89,14 +89,17 @@ class ProportionalTurnBehavior(BaseBehavior):
     def tick(self, ss: SensorState) -> Twist:
         error = normalize_angle(self._target_yaw - ss.yaw)
         tol = math.radians(self.params.get('tolerance_deg', 5))
-        kp = self.params.get('kp', 2.0)
+        kp = self.params.get('kp', 1.2)
+        fwd = self.params.get('forward_while_turning', 0.0)
 
         if abs(error) < tol or self.is_timed_out(ss):
             self._complete = True
             return self._clamp_twist(0.0, 0.0)
 
         angular = kp * error
-        return self._clamp_twist(0.0, angular)
+        # Small forward motion makes turns arc smoothly instead of spinning
+        linear = fwd if abs(error) > math.radians(15) else 0.0
+        return self._clamp_twist(linear, angular)
 
 
 class RandomTurnForwardBehavior(BaseBehavior):

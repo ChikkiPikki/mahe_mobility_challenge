@@ -1,11 +1,11 @@
 config_version: 1
 
 speed_profiles:
-  corridor:    { linear: 0.8,  angular: 0.5 }
-  approach:    { linear: 0.3,  angular: 0.3 }
-  turning:     { linear: 0.0,  angular: 0.8 }
-  reversing:   { linear: -0.3, angular: 0.0 }
-  cautious:    { linear: 0.4,  angular: 0.4 }
+  corridor:    { linear: 0.56, angular: 0.35 }
+  approach:    { linear: 0.21, angular: 0.21 }
+  turning:     { linear: 0.0,  angular: 0.45 }
+  reversing:   { linear: -0.21, angular: 0.0 }
+  cautious:    { linear: 0.28, angular: 0.28 }
 
 thresholds:
   stuck_displacement_m: 0.05
@@ -115,22 +115,22 @@ behaviors:
   turn_left_90:
     type: proportional_turn
     speed_profile: turning
-    params: { target_angle_deg: 90, tolerance_deg: 5, kp: 2.0 }
-    timeout_s: 8.0
+    params: { target_angle_deg: 90, tolerance_deg: 5, kp: 1.2, forward_while_turning: 0.1 }
+    timeout_s: 10.0
     completion: { method: angle_reached }
 
   turn_right_90:
     type: proportional_turn
     speed_profile: turning
-    params: { target_angle_deg: -90, tolerance_deg: 5, kp: 2.0 }
-    timeout_s: 8.0
+    params: { target_angle_deg: -90, tolerance_deg: 5, kp: 1.2, forward_while_turning: 0.1 }
+    timeout_s: 10.0
     completion: { method: angle_reached }
 
   turn_180:
     type: proportional_turn
     speed_profile: turning
-    params: { target_angle_deg: 180, tolerance_deg: 5, kp: 2.0 }
-    timeout_s: 12.0
+    params: { target_angle_deg: 180, tolerance_deg: 5, kp: 1.0, forward_while_turning: 0.05 }
+    timeout_s: 15.0
     completion: { method: angle_reached }
 
   stop:
