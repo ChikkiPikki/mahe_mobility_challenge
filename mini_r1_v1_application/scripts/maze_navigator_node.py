@@ -152,14 +152,8 @@ class MazeNavigatorNode(Node):
         self.update_odom()
         now = self._now_sec()
 
-        # Staleness protection
-        costmap_stale = self.thresholds.get('costmap_stale_timeout_s', 2.0)
-        odom_stale = self.thresholds.get('odom_stale_timeout_s', 1.0)
-
-        if self.ss.odom_stamp > 0 and (now - self.ss.odom_stamp) > odom_stale:
-            self.cmd_pub.publish(Twist())
-            return
-        if self.ss.costmap_stamp > 0 and (now - self.ss.costmap_stamp) > costmap_stale:
+        # Safety: don't drive if we've never received odom
+        if self.ss.odom_stamp == 0:
             self.cmd_pub.publish(Twist())
             return
 

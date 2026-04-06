@@ -93,7 +93,7 @@ behaviors:
       scan_max_m: 2.0
       kp_angular: 1.5
       min_gap_width_deg: 15
-    timeout_s: 60.0
+    timeout_s: 999999.0
     completion: { method: continuous }
 
   move_forward:

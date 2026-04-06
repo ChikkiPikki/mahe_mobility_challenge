@@ -38,9 +38,13 @@ class BaseBehavior:
         return self._complete
 
     def is_timed_out(self, ss: SensorState) -> bool:
+        if self._start_time < 1.0:
+            return False  # not properly started yet
         return (ss.now() - self._start_time) > self.timeout_s
 
     def elapsed(self, ss: SensorState) -> float:
+        if self._start_time < 1.0:
+            return 0.0
         return ss.now() - self._start_time
 
     def reset(self):
