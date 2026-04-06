@@ -28,12 +28,10 @@ class MarkerDetectorNode(Node):
         super().__init__('marker_detector_node')
 
         self.bridge = CvBridge()
-        self.aruco_dict = cv2.aruco.getPredefinedDictionary(cv2.aruco.DICT_4X4_50)
 
-        try:
-            self.aruco_params = cv2.aruco.DetectorParameters_create()
-        except AttributeError:
-            self.aruco_params = cv2.aruco.DetectorParameters()
+        # ArUco setup — handle both old API (OpenCV <4.8) and new API (4.8+)
+        self.aruco_dict = cv2.aruco.getPredefinedDictionary(cv2.aruco.DICT_4X4_50)
+        self.aruco_params = cv2.aruco.DetectorParameters()
         self.aruco_params.adaptiveThreshConstant = 7
         self.aruco_params.minMarkerPerimeterRate = 0.03
         self.aruco_params.maxMarkerPerimeterRate = 4.0
@@ -43,6 +41,10 @@ class MarkerDetectorNode(Node):
         self.aruco_params.cornerRefinementMethod = cv2.aruco.CORNER_REFINE_SUBPIX
         self.aruco_params.cornerRefinementWinSize = 5
         self.aruco_params.errorCorrectionRate = 0.6
+        # New API uses ArucoDetector class
+        self._use_new_aruco = hasattr(cv2.aruco, 'ArucoDetector')
+        if self._use_new_aruco:
+            self.aruco_detector = cv2.aruco.ArucoDetector(self.aruco_dict, self.aruco_params)
 
         # TF2
         self.tf_buffer = tf2_ros.Buffer()
@@ -219,8 +221,11 @@ class MarkerDetectorNode(Node):
     #  ArUco Detection (unchanged)
     # ══════════════════════════════════════════════════════════════════════
     def detect_aruco(self, cv_gray, cv_depth, fx, fy, cx, cy, rot, t_vec, panel_markers, viz_markers):
-        corners, ids, _ = cv2.aruco.detectMarkers(
-            cv_gray, self.aruco_dict, parameters=self.aruco_params)
+        if self._use_new_aruco:
+            corners, ids, _ = self.aruco_detector.detectMarkers(cv_gray)
+        else:
+            corners, ids, _ = cv2.aruco.detectMarkers(
+                cv_gray, self.aruco_dict, parameters=self.aruco_params)
         if ids is None:
             return
 
