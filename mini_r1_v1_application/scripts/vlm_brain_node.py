@@ -439,25 +439,30 @@ class NavigationBrain(Node):
         action = cmd.get("action", "stop")
 
         # Map VLM actions to navigator behaviors
-        # "forward" uses gap_follow (has LiDAR wall avoidance) not raw move_forward
         behavior_map = {
-            "forward": "gap_follow",
             "left": "turn_left_90",
             "right": "turn_right_90",
             "backward": "reverse",
             "stop": "stop",
         }
 
-        behavior_name = behavior_map.get(action, "move_forward")
-
-        # Publish behavioral command to navigator
-        nav_cmd = json.dumps({
-            "action": "execute_behavior",
-            "action_args": {"name": behavior_name},
-        })
-        cmd_msg = String()
-        cmd_msg.data = nav_cmd
-        self.command_pub.publish(cmd_msg)
+        if action == "forward":
+            # "forward" = let the navigator's gap_follow handle it (no override)
+            behavior_name = "gap_follow (no override)"
+            self.get_logger().info(f"VLM says forward — navigator continues autonomously")
+        elif action in behavior_map:
+            behavior_name = behavior_map[action]
+            # Publish behavioral command to navigator (override)
+            nav_cmd = json.dumps({
+                "action": "execute_behavior",
+                "action_args": {"name": behavior_name},
+            })
+            cmd_msg = String()
+            cmd_msg.data = nav_cmd
+            self.command_pub.publish(cmd_msg)
+            self.get_logger().info(f"VLM OVERRIDE → {behavior_name}")
+        else:
+            behavior_name = action
 
         # Also publish status for dashboard/RViz
         status_msg = String()
