@@ -62,10 +62,18 @@ DASHBOARD_HOST = "0.0.0.0"
 DASHBOARD_PORT = 8765
 
 # --- Prompt ---
-PROMPT_FILE = os.path.join(os.path.dirname(__file__), "..", "..", "prompts", "navigation.txt")
-if not os.path.exists(PROMPT_FILE):
-    # Fallback: try installed share path
-    PROMPT_FILE = os.path.join(os.path.dirname(__file__), "prompts", "navigation.txt")
+# Try multiple paths: source tree, installed share, script-relative
+_candidates = [
+    os.path.join(os.path.dirname(__file__), "..", "..", "prompts", "navigation.txt"),
+    os.path.join(os.path.dirname(__file__), "prompts", "navigation.txt"),
+]
+try:
+    from ament_index_python.packages import get_package_share_directory
+    _candidates.insert(0, os.path.join(
+        get_package_share_directory('mini_r1_v1_application'), 'prompts', 'navigation.txt'))
+except Exception:
+    pass
+PROMPT_FILE = next((p for p in _candidates if os.path.exists(p)), _candidates[0])
 
 # --- Valid Actions ---
 VALID_ACTIONS = {"forward", "left", "right", "backward", "stop"}
