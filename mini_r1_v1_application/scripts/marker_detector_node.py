@@ -62,13 +62,13 @@ class MarkerDetectorNode(Node):
         self.aruco_marker_length = self.declare_parameter('aruco_marker_length', 0.5).value
         self.aruco_box_size = self.declare_parameter('aruco_box_size', 0.5).value
 
-        # Sign detection params (for SAM mask filtering)
-        self.sign_blue_h_low = int(self.declare_parameter('sign_blue_h_low', 100).value)
-        self.sign_blue_h_high = int(self.declare_parameter('sign_blue_h_high', 130).value)
-        self.sign_blue_s_min = int(self.declare_parameter('sign_blue_s_min', 100).value)
-        self.sign_blue_v_min = int(self.declare_parameter('sign_blue_v_min', 80).value)
+        # Sign detection params (for SAM mask filtering — orange arrows)
+        self.sign_arrow_h_low = int(self.declare_parameter('sign_arrow_h_low', 0).value)
+        self.sign_arrow_h_high = int(self.declare_parameter('sign_arrow_h_high', 25).value)
+        self.sign_arrow_s_min = int(self.declare_parameter('sign_arrow_s_min', 150).value)
+        self.sign_arrow_v_min = int(self.declare_parameter('sign_arrow_v_min', 100).value)
         self.sign_min_mask_area = int(self.declare_parameter('sign_min_mask_area', 300).value)
-        self.sign_blue_ratio_min = self.declare_parameter('sign_blue_ratio_min', 0.35).value
+        self.sign_arrow_ratio_min = self.declare_parameter('sign_arrow_ratio_min', 0.30).value
         self.sign_curved_max_convexity = self.declare_parameter('sign_curved_max_convexity', 0.65).value
 
         # ── FastSAM (YOLO-based, much faster than MobileSAM) ──
@@ -316,16 +316,16 @@ class MarkerDetectorNode(Node):
     # ══════════════════════════════════════════════════════════════════════
     #  MobileSAM Sign Detection
     # ══════════════════════════════════════════════════════════════════════
-    def _is_blue_mask(self, hsv_img, mask):
-        """Check if >blue_ratio_min of mask pixels are blue."""
-        blue_lower = np.array([self.sign_blue_h_low, self.sign_blue_s_min, self.sign_blue_v_min])
-        blue_upper = np.array([self.sign_blue_h_high, 255, 255])
-        blue_in_hsv = cv2.inRange(hsv_img, blue_lower, blue_upper)
-        blue_pixels = np.count_nonzero(blue_in_hsv & mask)
+    def _is_arrow_color_mask(self, hsv_img, mask):
+        """Check if >arrow_ratio_min of mask pixels are orange (arrow color)."""
+        lower = np.array([self.sign_arrow_h_low, self.sign_arrow_s_min, self.sign_arrow_v_min])
+        upper = np.array([self.sign_arrow_h_high, 255, 255])
+        color_in_hsv = cv2.inRange(hsv_img, lower, upper)
+        color_pixels = np.count_nonzero(color_in_hsv & mask)
         mask_pixels = np.count_nonzero(mask)
         if mask_pixels == 0:
             return False
-        return (blue_pixels / mask_pixels) > self.sign_blue_ratio_min
+        return (color_pixels / mask_pixels) > self.sign_arrow_ratio_min
 
     def _has_white_surround(self, hsv_img, mask, margin=20):
         """Check if area around mask has white pixels (the sign panel)."""
@@ -432,8 +432,8 @@ class MarkerDetectorNode(Node):
                 if mask_area > (h_img * w_img * 0.1):
                     continue
 
-                # Filter: must be blue
-                if not self._is_blue_mask(hsv, mask_u8):
+                # Filter: must be orange (arrow color)
+                if not self._is_arrow_color_mask(hsv, mask_u8):
                     continue
 
                 # Filter: must have white surround (sign panel)
@@ -477,14 +477,14 @@ class MarkerDetectorNode(Node):
                 world_y = float(p_odom[1]) + self.spawn_y
                 world_z = float(p_odom[2])
 
-                # Dedup: skip if within 1m AND same direction type
+                # Dedup: skip if within 0.6m AND same direction type
                 already_locked = False
                 for key in self.locked_panel_signs:
                     pm = self.locked_panel_signs[key]
                     ddx = pm.pose.position.x - world_x
                     ddy = pm.pose.position.y - world_y
-                    if (ddx*ddx + ddy*ddy) < 1.0:
-                        # Check if same direction (stored in text of corresponding text marker)
+                    dist_sq = ddx*ddx + ddy*ddy
+                    if dist_sq < 0.36:  # 0.6m radius
                         for vm in self.locked_viz_signs.get(key, []):
                             if vm.type == Marker.TEXT_VIEW_FACING and direction in vm.text:
                                 already_locked = True
@@ -556,12 +556,13 @@ class MarkerDetectorNode(Node):
                     mtype=Marker.TEXT_VIEW_FACING,
                     text=f"Sign: {direction}", ns="sign_text")
 
-                # Cube marker at sign position
+                # Cube marker at sign position (translucent so sign is visible inside)
                 viz_cube = self._make_marker(
                     sign_id, stamp,
                     float(p_odom[0]), float(p_odom[1]), float(p_odom[2]),
                     cr, cg, cb, lifetime=0, ns="sign",
                     sx=0.3, sy=0.3, sz=0.3)
+                viz_cube.color.a = 0.3
 
                 # Panel marker for mission control (world coords)
                 panel_m = self._make_marker(

@@ -9,14 +9,14 @@ marker_detector_node:
     aruco_marker_length: 0.4      # metres (side length of the printed marker)
     aruco_box_size: 0.4           # metres (side length of the Gazebo cube)
 
-    # ── Sign Detection (MobileSAM) ───────────────
-    # Blue arrow HSV range (for filtering SAM masks)
-    sign_blue_h_low: 100
-    sign_blue_h_high: 130
-    sign_blue_s_min: 100
-    sign_blue_v_min: 80
+    # ── Sign Detection (FastSAM) ────────────────
+    # Orange arrow HSV range (for filtering SAM masks)
+    sign_arrow_h_low: 0
+    sign_arrow_h_high: 25
+    sign_arrow_s_min: 150
+    sign_arrow_v_min: 100
     sign_min_mask_area: 300       # minimum mask area (px²)
-    sign_blue_ratio_min: 0.35     # min fraction of mask pixels that must be blue
+    sign_arrow_ratio_min: 0.30    # min fraction of mask pixels that must be orange
     sign_curved_max_convexity: 0.65
 
     # SAM processing interval (process every N-th frame, higher = less GPU load)
