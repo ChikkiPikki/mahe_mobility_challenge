@@ -1,139 +1,319 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<title>Mini R1 — VLM Brain Dashboard</title>
-<style>
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-  body { background: #0d1117; color: #c9d1d9; font-family: 'Segoe UI', monospace; padding: 16px; }
-  h1 { color: #58a6ff; font-size: 18px; margin-bottom: 12px; }
-  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-  .card { background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 12px; }
-  .card h2 { color: #8b949e; font-size: 12px; text-transform: uppercase; margin-bottom: 8px; }
-  .val { color: #58a6ff; font-size: 14px; }
-  .reasoning { color: #f0f6fc; font-size: 13px; line-height: 1.5; white-space: pre-wrap;
-    background: #0d1117; padding: 8px; border-radius: 4px; max-height: 120px; overflow-y: auto; }
-  .action-tag { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 12px; font-weight: bold; }
-  .action-continue { background: #238636; color: #fff; }
-  .action-execute_behavior { background: #d29922; color: #000; }
-  .action-execute_recovery { background: #f85149; color: #fff; }
-  .detector { margin: 2px 0; font-size: 12px; }
-  .detector.active { color: #f85149; font-weight: bold; }
-  .detector.clear { color: #484f58; }
-  .tool-result { font-size: 11px; color: #8b949e; margin: 2px 0; }
-  #log { font-size: 11px; color: #8b949e; max-height: 200px; overflow-y: auto;
-    background: #0d1117; padding: 8px; border-radius: 4px; }
-  .status-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; }
-  .dot-green { background: #3fb950; }
-  .dot-red { background: #f85149; }
-  .dot-yellow { background: #d29922; }
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VLM Navigation Brain</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Courier New', monospace;
+            background: #0a0a0a;
+            color: #e0e0e0;
+            padding: 20px;
+        }
+        h1 {
+            font-size: 1.4em;
+            color: #00ff88;
+            margin-bottom: 16px;
+        }
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            max-width: 1200px;
+        }
+        .panel {
+            background: #1a1a1a;
+            border: 1px solid #333;
+            border-radius: 8px;
+            padding: 16px;
+        }
+        .panel h2 {
+            font-size: 0.9em;
+            color: #888;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 12px;
+        }
+        #objective-display {
+            font-size: 1.2em;
+            color: #00ff88;
+            min-height: 1.5em;
+        }
+        #status-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 0.85em;
+            font-weight: bold;
+        }
+        .status-moving { background: #1a3a1a; color: #00ff88; }
+        .status-stopped { background: #3a3a1a; color: #ffaa00; }
+        .status-stuck { background: #3a1a1a; color: #ff4444; }
+        .status-error { background: #3a1a1a; color: #ff4444; }
+        #reasoning-log {
+            max-height: 400px;
+            overflow-y: auto;
+            font-size: 0.85em;
+            line-height: 1.6;
+        }
+        .reasoning-entry {
+            padding: 8px 0;
+            border-bottom: 1px solid #222;
+        }
+        .reasoning-entry .action {
+            color: #00aaff;
+            font-weight: bold;
+        }
+        .reasoning-entry .text {
+            color: #ccc;
+        }
+        .reasoning-entry .meta {
+            color: #666;
+            font-size: 0.8em;
+        }
+        #observation-log {
+            max-height: 200px;
+            overflow-y: auto;
+            font-size: 0.85em;
+            color: #aaa;
+            line-height: 1.5;
+        }
+        .observation-entry {
+            padding: 4px 0;
+            border-bottom: 1px solid #1a1a1a;
+        }
+        .stats {
+            display: flex;
+            gap: 24px;
+            font-size: 0.85em;
+        }
+        .stat-item {
+            display: flex;
+            flex-direction: column;
+        }
+        .stat-label { color: #666; font-size: 0.8em; }
+        .stat-value { color: #00ff88; font-size: 1.2em; }
+        .controls {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 16px;
+        }
+        input[type="text"] {
+            flex: 1;
+            padding: 8px 12px;
+            background: #222;
+            border: 1px solid #444;
+            border-radius: 6px;
+            color: #fff;
+            font-family: inherit;
+            font-size: 0.95em;
+        }
+        button {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-family: inherit;
+            font-weight: bold;
+        }
+        .btn-go {
+            background: #00ff88;
+            color: #000;
+        }
+        .btn-stop {
+            background: #ff4444;
+            color: #fff;
+        }
+        .connection-status {
+            font-size: 0.75em;
+            color: #666;
+            text-align: right;
+        }
+        .connected { color: #00ff88; }
+        .disconnected { color: #ff4444; }
+    </style>
 </head>
 <body>
-<h1>Mini R1 — VLM Brain Dashboard</h1>
-<div class="grid">
+    <h1>VLM Navigation Brain</h1>
 
-  <div class="card">
-    <h2>VLM Status</h2>
-    <div><span class="status-dot" id="conn-dot"></span><span id="provider">disconnected</span></div>
-    <div style="margin-top:8px">Action: <span class="action-tag" id="action">—</span></div>
-    <div id="action-args" style="font-size:11px;color:#8b949e;margin-top:4px"></div>
-  </div>
+    <div class="controls">
+        <input type="text" id="objective-input" placeholder="Enter objective (e.g., 'find the room with the conference table')" />
+        <button class="btn-go" onclick="setObjective()">Go</button>
+        <button class="btn-stop" onclick="stopRobot()">Stop</button>
+    </div>
 
-  <div class="card">
-    <h2>Navigator</h2>
-    <div>State: <span class="val" id="nav-state">—</span></div>
-    <div>Behavior: <span class="val" id="nav-behavior">—</span></div>
-    <div>ArUco: <span class="val" id="arucos">—</span></div>
-  </div>
+    <div class="grid">
+        <div class="panel">
+            <h2>Status</h2>
+            <p>Objective: <span id="objective-display">No objective set</span></p>
+            <p style="margin-top: 8px;">
+                Status: <span id="status-badge" class="status-stopped">STOPPED</span>
+                &nbsp; Provider: <span id="provider">—</span>
+            </p>
+            <div class="stats" style="margin-top: 12px;">
+                <div class="stat-item">
+                    <span class="stat-label">API Calls</span>
+                    <span class="stat-value" id="api-calls">0</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Position</span>
+                    <span class="stat-value" id="position">—</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Last Action</span>
+                    <span class="stat-value" id="last-action">—</span>
+                </div>
+            </div>
+        </div>
 
-  <div class="card" style="grid-column: 1 / -1;">
-    <h2>Reasoning</h2>
-    <div class="reasoning" id="reasoning">Waiting for VLM...</div>
-  </div>
+        <div class="panel">
+            <h2>Observation Memory</h2>
+            <div id="observation-log"></div>
+        </div>
 
-  <div class="card">
-    <h2>Observation</h2>
-    <div class="reasoning" id="observation" style="max-height:80px">—</div>
-  </div>
+        <div class="panel" style="grid-column: 1 / -1;">
+            <h2>Reasoning Stream</h2>
+            <div id="reasoning-log"></div>
+        </div>
+    </div>
 
-  <div class="card">
-    <h2>Tool Results</h2>
-    <div id="tool-results">—</div>
-  </div>
+    <p class="connection-status" id="conn-status">Connecting...</p>
 
-  <div class="card">
-    <h2>Position</h2>
-    <div id="position">—</div>
-  </div>
+    <script>
+        let ws = null;
+        let reconnectTimer = null;
 
-  <div class="card">
-    <h2>Requested Tools</h2>
-    <div id="tool-calls" style="font-size:12px">—</div>
-  </div>
+        function connect() {
+            const proto = location.protocol === 'https:' ? 'wss' : 'ws';
+            ws = new WebSocket(`${proto}://${location.host}/ws`);
 
-  <div class="card" style="grid-column: 1 / -1;">
-    <h2>Log</h2>
-    <div id="log"></div>
-  </div>
+            ws.onopen = () => {
+                document.getElementById('conn-status').textContent = 'Connected';
+                document.getElementById('conn-status').className = 'connection-status connected';
+                if (reconnectTimer) {
+                    clearTimeout(reconnectTimer);
+                    reconnectTimer = null;
+                }
+            };
 
-</div>
+            ws.onclose = () => {
+                document.getElementById('conn-status').textContent = 'Disconnected — reconnecting...';
+                document.getElementById('conn-status').className = 'connection-status disconnected';
+                reconnectTimer = setTimeout(connect, 2000);
+            };
 
-<script>
-const ws = new WebSocket(`ws://${location.host}/ws`);
-const log = document.getElementById('log');
+            ws.onerror = () => {
+                ws.close();
+            };
 
-ws.onopen = () => {
-  document.getElementById('conn-dot').className = 'status-dot dot-green';
-  addLog('Connected to dashboard');
-};
-ws.onclose = () => {
-  document.getElementById('conn-dot').className = 'status-dot dot-red';
-  addLog('Disconnected');
-};
+            ws.onmessage = (event) => {
+                const data = JSON.parse(event.data);
+                handleMessage(data);
+            };
+        }
 
-ws.onmessage = (e) => {
-  const d = JSON.parse(e.data);
-  if (d.type === 'vlm_status') updateVLM(d);
-  if (d.type === 'navigator_status') updateNav(d);
-};
+        function handleMessage(data) {
+            if (data.type === 'objective_set') {
+                document.getElementById('objective-display').textContent = data.objective;
+                return;
+            }
+            if (data.type === 'stopped') {
+                updateStatus('stopped');
+                return;
+            }
 
-function updateVLM(d) {
-  document.getElementById('provider').textContent = d.provider || '?';
-  const actionEl = document.getElementById('action');
-  actionEl.textContent = d.action || 'none';
-  actionEl.className = 'action-tag action-' + (d.action || 'continue');
-  document.getElementById('action-args').textContent = JSON.stringify(d.action_args || {});
-  document.getElementById('reasoning').textContent = d.reasoning || '—';
-  document.getElementById('observation').textContent = d.observation || '—';
-  document.getElementById('arucos').textContent = (d.arucos || []).join(', ') || 'none';
+            // Reasoning update
+            if (data.reasoning) {
+                addReasoning(data);
+            }
+            if (data.observation) {
+                addObservation(data.observation);
+            }
+            if (data.api_calls !== undefined) {
+                document.getElementById('api-calls').textContent = data.api_calls;
+            }
+            if (data.provider) {
+                document.getElementById('provider').textContent = data.provider;
+            }
+            if (data.odom) {
+                document.getElementById('position').textContent =
+                    `(${data.odom.x.toFixed(1)}, ${data.odom.y.toFixed(1)})`;
+            }
+            if (data.action) {
+                document.getElementById('last-action').textContent = data.action;
+            }
 
-  const pos = d.position || {};
-  document.getElementById('position').textContent =
-    `(${pos.x || 0}, ${pos.y || 0}) yaw=${pos.yaw_deg || 0}°`;
+            if (data.objective_complete) {
+                updateStatus('stopped');
+            } else if (data.status === 'stuck') {
+                updateStatus('stuck');
+            } else if (data.action && data.action !== 'stop') {
+                updateStatus('moving');
+            }
+        }
 
-  const tcEl = document.getElementById('tool-calls');
-  tcEl.textContent = (d.tool_calls || []).join(', ') || 'none';
+        function addReasoning(data) {
+            const log = document.getElementById('reasoning-log');
+            const entry = document.createElement('div');
+            entry.className = 'reasoning-entry';
+            const speed = data.speed ? ` spd:${data.speed}` : '';
+            const angle = data.turn_angle ? ` ang:${data.turn_angle}` : '';
+            entry.innerHTML = `
+                <span class="action">[${data.action || '?'}${speed}${angle}]</span>
+                <span class="text">${data.reasoning || ''}</span>
+                <div class="meta">#${data.api_calls || 0} via ${data.provider || '?'}</div>
+            `;
+            log.insertBefore(entry, log.firstChild);
 
-  const trEl = document.getElementById('tool-results');
-  const tr = d.tool_results || {};
-  trEl.innerHTML = Object.keys(tr).length ?
-    Object.entries(tr).map(([k,v]) => `<div class="tool-result">${k}: ${v}</div>`).join('') : '—';
+            // Keep max 50 entries
+            while (log.children.length > 50) {
+                log.removeChild(log.lastChild);
+            }
+        }
 
-  addLog(`[${d.provider}] ${d.action}: ${(d.reasoning || '').substring(0, 80)}`);
-}
+        function addObservation(obs) {
+            const log = document.getElementById('observation-log');
+            const entry = document.createElement('div');
+            entry.className = 'observation-entry';
+            entry.textContent = obs;
+            log.insertBefore(entry, log.firstChild);
 
-function updateNav(d) {
-  document.getElementById('nav-state').textContent = d.state || '?';
-  document.getElementById('nav-behavior').textContent = d.behavior || '?';
-}
+            while (log.children.length > 10) {
+                log.removeChild(log.lastChild);
+            }
+        }
 
-function addLog(text) {
-  const line = document.createElement('div');
-  line.textContent = new Date().toLocaleTimeString() + ' ' + text;
-  log.prepend(line);
-  while (log.children.length > 50) log.removeChild(log.lastChild);
-}
-</script>
+        function updateStatus(status) {
+            const badge = document.getElementById('status-badge');
+            badge.textContent = status.toUpperCase();
+            badge.className = `status-${status}`;
+        }
+
+        function setObjective() {
+            const input = document.getElementById('objective-input');
+            const objective = input.value.trim();
+            if (!objective || !ws || ws.readyState !== WebSocket.OPEN) return;
+            ws.send(JSON.stringify({ type: 'set_objective', objective }));
+            document.getElementById('objective-display').textContent = objective;
+            input.value = '';
+            updateStatus('moving');
+        }
+
+        function stopRobot() {
+            if (!ws || ws.readyState !== WebSocket.OPEN) return;
+            ws.send(JSON.stringify({ type: 'stop' }));
+            updateStatus('stopped');
+        }
+
+        // Enter key to submit
+        document.getElementById('objective-input').addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') setObjective();
+        });
+
+        // Auto-connect
+        connect();
+    </script>
 </body>
 </html>

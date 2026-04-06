@@ -1,125 +1,148 @@
-#!/usr/bin/env python3
-"""
-VLM Dashboard — FastAPI + WebSocket server for real-time VLM reasoning visualization.
-Subscribes to /vlm_brain/status and broadcasts to all connected web clients.
+"""Web Dashboard - FastAPI + WebSocket for reasoning stream."""
 
-Run standalone: python3 vlm_dashboard.py
-Or alongside ROS2: ros2 run mini_r1_v1_application vlm_dashboard.py
-"""
-import os
-import sys
-import json
 import asyncio
+import json
+import os
 import threading
 
-# ROS2
-import rclpy
-from rclpy.node import Node
-from std_msgs.msg import String
-
-# FastAPI
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect
-from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse
 import uvicorn
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect
+from fastapi.responses import HTMLResponse
+from fastapi.staticfiles import StaticFiles
+
+import rclpy
+from rclpy.executors import MultiThreadedExecutor
+
+import os, sys
+_script_dir = os.path.dirname(os.path.abspath(__file__))
+if _script_dir not in sys.path:
+    sys.path.insert(0, _script_dir)
+import vlm_config as config
+from vlm_brain_node import NavigationBrain, _vlmap_available, _sign_detector_available, VLMAP_ENABLED, SIGN_DETECTOR_ENABLED
+
+# Optional hybrid modules
+VLMapBuilder = None
+SignDetector = None
+if _vlmap_available:
+    from vlmap_builder import VLMapBuilder
+if _sign_detector_available:
+    from sign_detector import SignDetector
 
 app = FastAPI()
-connected_clients: list[WebSocket] = []
-latest_status = {}
+app.mount("/static", StaticFiles(directory=os.path.join(os.path.dirname(__file__), "vlm_static")), name="vlm_static")
 
-
-# ── WebSocket ───────────────────────────────────────────────────────────
-
-@app.websocket("/ws")
-async def websocket_endpoint(ws: WebSocket):
-    await ws.accept()
-    connected_clients.append(ws)
-    try:
-        # Send current state immediately
-        if latest_status:
-            await ws.send_json(latest_status)
-        while True:
-            data = await ws.receive_text()
-            # Future: handle dashboard → brain commands here
-    except WebSocketDisconnect:
-        connected_clients.remove(ws)
+# Global state
+brain: NavigationBrain | None = None
+connected_clients: set[WebSocket] = set()
 
 
 async def broadcast(data: dict):
-    for ws in connected_clients[:]:
+    """Send data to all connected WebSocket clients."""
+    message = json.dumps(data)
+    disconnected = set()
+    for ws in connected_clients:
         try:
-            await ws.send_json(data)
+            await ws.send_text(message)
         except Exception:
-            connected_clients.remove(ws)
+            disconnected.add(ws)
+    connected_clients -= disconnected
 
 
-# ── Static files ────────────────────────────────────────────────────────
+def on_reasoning_sync(data: dict):
+    """Bridge sync callback to async broadcast."""
+    loop = asyncio.get_event_loop()
+    if loop.is_running():
+        asyncio.run_coroutine_threadsafe(broadcast(data), loop)
 
-static_dir = os.path.join(os.path.dirname(__file__), 'vlm_static')
 
 @app.get("/")
 async def index():
-    return FileResponse(os.path.join(static_dir, 'index.html'))
-
-if os.path.isdir(static_dir):
-    app.mount("/static", StaticFiles(directory=static_dir), name="static")
-
-
-# ── ROS2 Node ───────────────────────────────────────────────────────────
-
-class DashboardBridgeNode(Node):
-    def __init__(self, loop):
-        super().__init__('vlm_dashboard_node')
-        self._loop = loop
-        self.create_subscription(
-            String, '/vlm_brain/status', self._status_cb, 10)
-        self.create_subscription(
-            String, '/mini_r1/navigator/status', self._nav_cb, 10)
-        self.get_logger().info("Dashboard bridge started.")
-
-    def _status_cb(self, msg: String):
-        global latest_status
-        try:
-            data = json.loads(msg.data)
-            data['type'] = 'vlm_status'
-            latest_status = data
-            asyncio.run_coroutine_threadsafe(broadcast(data), self._loop)
-        except json.JSONDecodeError:
-            pass
-
-    def _nav_cb(self, msg: String):
-        try:
-            data = json.loads(msg.data)
-            data['type'] = 'navigator_status'
-            asyncio.run_coroutine_threadsafe(broadcast(data), self._loop)
-        except json.JSONDecodeError:
-            pass
+    """Serve the dashboard HTML."""
+    html_path = os.path.join(os.path.dirname(__file__), "vlm_static", "index.html")
+    with open(html_path) as f:
+        return HTMLResponse(f.read())
 
 
-# ── Main ────────────────────────────────────────────────────────────────
+@app.websocket("/ws")
+async def websocket_endpoint(ws: WebSocket):
+    """Handle WebSocket connections for reasoning stream."""
+    await ws.accept()
+    connected_clients.add(ws)
+    try:
+        while True:
+            data = await ws.receive_text()
+            msg = json.loads(data)
 
-def ros2_spin(node):
-    rclpy.spin(node)
+            if msg.get("type") == "set_objective":
+                objective = msg.get("objective", "")
+                if objective and brain:
+                    brain.set_objective(objective)
+                    await broadcast({
+                        "type": "objective_set",
+                        "objective": objective,
+                    })
+
+            elif msg.get("type") == "stop":
+                if brain:
+                    brain.stop_navigation()
+                    await broadcast({"type": "stopped"})
+
+    except WebSocketDisconnect:
+        connected_clients.discard(ws)
+    except Exception:
+        connected_clients.discard(ws)
 
 
 def main():
+    global brain
+
     rclpy.init()
-    loop = asyncio.new_event_loop()
+    brain = NavigationBrain()
 
-    node = DashboardBridgeNode(loop)
-    ros_thread = threading.Thread(target=ros2_spin, args=(node,), daemon=True)
-    ros_thread.start()
+    # Set up reasoning callback
+    brain.on_reasoning = on_reasoning_sync
 
-    config = uvicorn.Config(app, host="0.0.0.0", port=8765, loop="asyncio", log_level="warning")
-    server = uvicorn.Server(config)
+    # Spin up hybrid modules alongside brain
+    executor = MultiThreadedExecutor()
+    executor.add_node(brain)
 
-    asyncio.set_event_loop(loop)
-    print(f"Dashboard at http://localhost:8765")
-    loop.run_until_complete(server.serve())
+    if _vlmap_available and VLMAP_ENABLED and VLMapBuilder:
+        brain.vlmap = VLMapBuilder()
+        executor.add_node(brain.vlmap)
+        print("[dashboard] VLMap spatial memory ENABLED")
 
-    node.destroy_node()
-    rclpy.shutdown()
+    if _sign_detector_available and SIGN_DETECTOR_ENABLED and SignDetector:
+        brain.sign_detector = SignDetector()
+        executor.add_node(brain.sign_detector)
+        print("[dashboard] Sign detector ENABLED")
+
+    # Spin ROS2 in background
+    spin_thread = threading.Thread(target=executor.spin, daemon=True)
+    spin_thread.start()
+
+    # Run brain loop in background
+    brain_thread = threading.Thread(target=brain.run_loop, daemon=True)
+    brain_thread.start()
+
+    # Run FastAPI (blocks)
+    try:
+        uvicorn.run(
+            app,
+            host=config.DASHBOARD_HOST,
+            port=config.DASHBOARD_PORT,
+            log_level="info",
+        )
+    except KeyboardInterrupt:
+        pass
+    finally:
+        brain.shutdown()
+        if brain.vlmap:
+            brain.vlmap.destroy_node()
+        if brain.sign_detector:
+            brain.sign_detector.destroy_node()
+        brain.destroy_node()
+        rclpy.shutdown()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
