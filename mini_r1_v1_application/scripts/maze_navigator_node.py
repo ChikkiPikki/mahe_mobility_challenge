@@ -5,8 +5,14 @@ Reads behavior_config.yaml and executes a state machine that follows
 corridors, obeys directional signs, and recovers from dead-ends/stuck/loops.
 """
 import os
+import sys
 import math
 import numpy as np
+
+# Ensure nav_lib is importable (installed alongside this script)
+_script_dir = os.path.dirname(os.path.abspath(__file__))
+if _script_dir not in sys.path:
+    sys.path.insert(0, _script_dir)
 
 import rclpy
 from rclpy.node import Node
