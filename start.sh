@@ -23,10 +23,8 @@
 set -e
 
 # ── Configuration ───────────────────────────────────────────────────────
-VLLM_MODEL="Qwen/Qwen2.5-VL-3B-Instruct"
-VLLM_PORT=8000
-VLLM_MAX_LEN=1024
-VLLM_GPU_UTIL=0.90
+OLLAMA_MODEL="qwen2.5vl:3b"
+OLLAMA_PORT=11434
 DOCKER_IMAGE="mini_r1_jazzy"
 CONTAINER_NAME="openbot"
 SRC_DIR="$(cd "$(dirname "$0")" && pwd)"
@@ -69,58 +67,38 @@ cleanup() {
 trap cleanup EXIT
 
 # ── Step 1: Start vLLM Server ──────────────────────────────────────────
-start_vllm() {
-    echo -e "${CYAN}━━━ Starting vLLM Server ━━━${NC}"
-    echo -e "  Model:    ${GREEN}$VLLM_MODEL${NC}"
-    echo -e "  Port:     ${GREEN}$VLLM_PORT${NC}"
-    echo -e "  GPU util: ${GREEN}$VLLM_GPU_UTIL${NC}"
+start_vlm() {
+    echo -e "${CYAN}━━━ Starting Ollama VLM Server ━━━${NC}"
+    echo -e "  Model: ${GREEN}$OLLAMA_MODEL${NC}"
+    echo -e "  Port:  ${GREEN}$OLLAMA_PORT${NC}"
 
-    # Check if already running
-    if curl -s "http://localhost:$VLLM_PORT/v1/models" >/dev/null 2>&1; then
-        echo -e "${GREEN}vLLM already running on port $VLLM_PORT${NC}"
-        return 0
+    # Check if Ollama is installed
+    if ! command -v ollama &>/dev/null; then
+        echo -e "${RED}Ollama not found. Installing...${NC}"
+        curl -fsSL https://ollama.com/install.sh | sh
     fi
 
-    # Find vllm executable
-    VLLM_BIN=""
-    if command -v vllm &>/dev/null; then
-        VLLM_PYTHON="$(command -v python3)"
-    elif [ -f "$HOME/anaconda3/bin/python" ]; then
-        VLLM_PYTHON="$HOME/anaconda3/bin/python"
-    elif [ -f "$HOME/miniconda3/bin/python" ]; then
-        VLLM_PYTHON="$HOME/miniconda3/bin/python"
+    # Check if already serving
+    if curl -s "http://localhost:$OLLAMA_PORT/v1/models" >/dev/null 2>&1; then
+        echo -e "${GREEN}Ollama already running on port $OLLAMA_PORT${NC}"
     else
-        echo -e "${RED}ERROR: Cannot find vllm. Install with: pip install vllm qwen-vl-utils${NC}"
+        echo -e "${YELLOW}Starting Ollama serve...${NC}"
+        ollama serve 2>&1 | sed 's/^/  [Ollama] /' &
+        VLLM_PID=$!
+        sleep 3
+    fi
+
+    # Pull model if needed
+    echo -e "${YELLOW}Ensuring model $OLLAMA_MODEL is available...${NC}"
+    ollama pull "$OLLAMA_MODEL" 2>&1 | sed 's/^/  [Ollama] /'
+
+    # Verify
+    if curl -s "http://localhost:$OLLAMA_PORT/v1/models" >/dev/null 2>&1; then
+        echo -e "${GREEN}Ollama ready on http://localhost:$OLLAMA_PORT/v1${NC}"
+    else
+        echo -e "${RED}ERROR: Ollama failed to start${NC}"
         exit 1
     fi
-
-    echo -e "${YELLOW}Starting vLLM in background...${NC}"
-    $VLLM_PYTHON -m vllm.entrypoints.openai.api_server \
-        --model "$VLLM_MODEL" \
-        --max-model-len "$VLLM_MAX_LEN" \
-        --gpu-memory-utilization "$VLLM_GPU_UTIL" \
-        --port "$VLLM_PORT" \
-        --trust-remote-code \
-        --dtype half \
-        --enforce-eager \
-        2>&1 | sed 's/^/  [vLLM] /' &
-    VLLM_PID=$!
-
-    # Wait for server to be ready
-    echo -e "${YELLOW}Waiting for vLLM to load model (this may take 30-60s)...${NC}"
-    for i in $(seq 1 120); do
-        if curl -s "http://localhost:$VLLM_PORT/v1/models" >/dev/null 2>&1; then
-            echo -e "${GREEN}vLLM ready on http://localhost:$VLLM_PORT/v1${NC}"
-            return 0
-        fi
-        if ! kill -0 "$VLLM_PID" 2>/dev/null; then
-            echo -e "${RED}ERROR: vLLM process died. Check logs above.${NC}"
-            exit 1
-        fi
-        sleep 2
-    done
-    echo -e "${RED}ERROR: vLLM failed to start within 240s${NC}"
-    exit 1
 }
 
 # ── Step 2: Start Docker Container ─────────────────────────────────────
@@ -189,14 +167,14 @@ echo -e "${CYAN}╚════════════════════�
 echo ""
 
 if [ "$VLM_ONLY" = true ]; then
-    start_vllm
+    start_vlm
     echo -e "\n${GREEN}vLLM server running. Press Ctrl+C to stop.${NC}"
     wait "$VLLM_PID"
     exit 0
 fi
 
 if [ "$NO_VLM" = false ]; then
-    start_vllm
+    start_vlm
 fi
 
 start_docker

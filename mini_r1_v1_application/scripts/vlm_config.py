@@ -4,11 +4,11 @@ from dotenv import load_dotenv
 
 load_dotenv(os.path.join(os.path.dirname(__file__), '..', '..', '.env'))
 
-# ── Local VLM (vLLM on host, Docker connects via --network=host) ────────
+# ── Local VLM (Ollama on host, Docker connects via --network=host) ──────
 LOCAL_VLM_ENABLED = os.getenv("LOCAL_VLM_ENABLED", "true").lower() == "true"
-LOCAL_VLM_BASE_URL = os.getenv("LOCAL_VLM_BASE_URL", "http://localhost:8000/v1")
-LOCAL_VLM_MODEL = os.getenv("LOCAL_VLM_MODEL", "Qwen/Qwen2.5-VL-3B-Instruct")
-LOCAL_VLM_API_KEY = os.getenv("LOCAL_VLM_API_KEY", "not-needed")
+LOCAL_VLM_BASE_URL = os.getenv("LOCAL_VLM_BASE_URL", "http://localhost:11434/v1")
+LOCAL_VLM_MODEL = os.getenv("LOCAL_VLM_MODEL", "qwen2.5vl:3b")
+LOCAL_VLM_API_KEY = os.getenv("LOCAL_VLM_API_KEY", "ollama")
 
 # ── Cloud Fallback: NVIDIA NIM ──────────────────────────────────────────
 NVIDIA_API_KEY = os.getenv("NVIDIA_API_KEY", "")
