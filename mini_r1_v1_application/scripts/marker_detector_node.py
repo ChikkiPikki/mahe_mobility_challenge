@@ -389,14 +389,15 @@ class MarkerDetectorNode(Node):
             return None, None
 
         angle = np.degrees(np.arctan2(dy, dx))
+        # Camera sees the sign face-on, so image-left = sign's right
         if -135 < angle <= -45:
             return 'forward', cnt
         elif -45 < angle <= 45:
-            return 'right', cnt
+            return 'left', cnt    # image-right = sign points left
         elif 45 < angle <= 135:
-            return None, None  # pointing down = back of sign
+            return None, None     # pointing down = back of sign
         else:
-            return 'left', cnt
+            return 'right', cnt   # image-left = sign points right
 
     def detect_signs_sam(self, cv_rgb, cv_depth, fx, fy, cx, cy, rot, t_vec,
                          panel_markers, viz_markers):
@@ -425,8 +426,12 @@ class MarkerDetectorNode(Node):
 
         if results and results[0].masks is not None:
             masks_data = results[0].masks.data.cpu().numpy()
+            n_total = masks_data.shape[0]
+            n_orange = 0
+            n_white = 0
+            n_classified = 0
 
-            for idx in range(masks_data.shape[0]):
+            for idx in range(n_total):
                 raw_mask = masks_data[idx].astype(np.uint8)
                 if raw_mask.shape[:2] != (h_img, w_img):
                     mask = cv2.resize(raw_mask, (w_img, h_img),
@@ -445,15 +450,18 @@ class MarkerDetectorNode(Node):
                 # Filter: must be orange (arrow color)
                 if not self._is_arrow_color_mask(hsv, mask_u8):
                     continue
+                n_orange += 1
 
                 # Filter: must have white surround (sign panel)
                 if not self._has_white_surround(hsv, mask_u8):
                     continue
+                n_white += 1
 
                 # Classify direction
                 direction, cnt = self._classify_direction_from_mask(mask_u8)
                 if direction is None or cnt is None:
                     continue
+                n_classified += 1
 
                 # Get centroid
                 M = cv2.moments(cnt)
@@ -596,6 +604,11 @@ class MarkerDetectorNode(Node):
                 bx, by, bw, bh = cv2.boundingRect(cnt)
                 cv2.putText(annotated, direction, (bx, by - 5),
                             cv2.FONT_HERSHEY_SIMPLEX, 0.6, color_bgr, 2)
+
+        if n_total > 0:
+            self.get_logger().info(
+                f"SAM: {n_total} masks → {n_orange} orange → {n_white} white-surround → {n_classified} classified | locked={len(self.locked_panel_signs)}",
+                throttle_duration_sec=3.0)
 
         # Republish all locked signs
         for pm in self.locked_panel_signs.values():
