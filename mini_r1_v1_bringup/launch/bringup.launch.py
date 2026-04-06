@@ -127,6 +127,7 @@ def generate_launch_description():
             {
                 'spawn_x': spawn_x,
                 'spawn_y': spawn_y,
+                'use_sim_time': True,
             }
         ]
     )
@@ -142,6 +143,7 @@ def generate_launch_description():
             'spawn_y': spawn_y,
             'goal_x': goal_x,
             'goal_y': goal_y,
+            'use_sim_time': True,
         }]
     )
 
@@ -151,6 +153,7 @@ def generate_launch_description():
         executable='dynamic_obstacle_node.py',
         name='dynamic_obstacle_node',
         output='screen',
+        parameters=[{'use_sim_time': True}],
     )
 
     # 8. Maze Navigator Node: config-driven autonomous navigation
@@ -162,6 +165,7 @@ def generate_launch_description():
         output='screen',
         parameters=[{
             'behavior_config': behavior_config,
+            'use_sim_time': True,
         }]
     )
 

@@ -33,6 +33,9 @@ class MazeNavigatorNode(Node):
     def __init__(self):
         super().__init__('maze_navigator_node')
 
+        # Use sim time
+        self.declare_parameter('use_sim_time', True)
+
         # Load behavior config
         config_path = self.declare_parameter(
             'behavior_config', '').value
@@ -92,6 +95,9 @@ class MazeNavigatorNode(Node):
             f"Behaviors: {list(self.cfg['behaviors'].keys())}, "
             f"Detectors: {list(self.cfg['detectors'].keys())}")
 
+    def _now_sec(self) -> float:
+        return self.get_clock().now().nanoseconds / 1e9
+
     # ── Callbacks ────────────────────────────────────────────────────────
     def costmap_cb(self, msg: OccupancyGrid):
         self.ss.costmap_data = np.array(msg.data, dtype=np.int8)
@@ -100,11 +106,11 @@ class MazeNavigatorNode(Node):
         self.ss.costmap_resolution = msg.info.resolution
         self.ss.costmap_origin_x = msg.info.origin.position.x
         self.ss.costmap_origin_y = msg.info.origin.position.y
-        self.ss.costmap_stamp = self.get_clock().now().nanoseconds / 1e9
+        self.ss.costmap_stamp = self._now_sec()
 
     def sign_cb(self, msg: String):
         self.ss.last_sign = msg.data
-        self.ss.sign_stamp = self.get_clock().now().nanoseconds / 1e9
+        self.ss.sign_stamp = self._now_sec()
 
     def mission_cb(self, msg: String):
         if msg.data == "MISSION_COMPLETE":
@@ -114,7 +120,7 @@ class MazeNavigatorNode(Node):
         self.ss.lidar_ranges = np.array(msg.ranges, dtype=np.float32)
         self.ss.lidar_angle_min = msg.angle_min
         self.ss.lidar_angle_increment = msg.angle_increment
-        self.ss.lidar_stamp = self.get_clock().now().nanoseconds / 1e9
+        self.ss.lidar_stamp = self._now_sec()
 
     def marker_cb(self, msg: MarkerArray):
         for m in msg.markers:
@@ -132,7 +138,7 @@ class MazeNavigatorNode(Node):
             siny = 2.0 * (q.w * q.z + q.x * q.y)
             cosy = 1.0 - 2.0 * (q.y * q.y + q.z * q.z)
             self.ss.yaw = math.atan2(siny, cosy)
-            self.ss.odom_stamp = self.get_clock().now().nanoseconds / 1e9
+            self.ss.odom_stamp = self._now_sec()
         except TransformException:
             pass
 
@@ -147,7 +153,7 @@ class MazeNavigatorNode(Node):
     # ── Main tick ────────────────────────────────────────────────────────
     def tick(self):
         self.update_odom()
-        now = self.get_clock().now().nanoseconds / 1e9
+        now = self._now_sec()
 
         # Staleness protection
         costmap_stale = self.thresholds.get('costmap_stale_timeout_s', 2.0)
