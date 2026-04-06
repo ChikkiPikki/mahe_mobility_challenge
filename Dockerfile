@@ -30,6 +30,14 @@ ENV __GLX_VENDOR_LIBRARY_NAME=nvidia
 
 LABEL hostname="openbot"
 
+# ── Add OSRF Gazebo repo (for gz Python bindings not in ROS packages) ──
+RUN apt-get update && apt-get install -y --no-install-recommends wget lsb-release gnupg \
+    && wget -q https://packages.osrfoundation.org/gazebo.gpg \
+       -O /usr/share/keyrings/pkgs-osrf-archive-keyring.gpg \
+    && echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/pkgs-osrf-archive-keyring.gpg] http://packages.osrfoundation.org/gazebo/ubuntu-stable $(lsb_release -cs) main" \
+       > /etc/apt/sources.list.d/gazebo-stable.list \
+    && rm -rf /var/lib/apt/lists/*
+
 # ── System + ROS 2 Jazzy + Gazebo Harmonic packages ────────────────────
 RUN apt-get update && apt-get install -y --no-install-recommends \
     # ── Build tools ──────────────────────────────────────────────────────
