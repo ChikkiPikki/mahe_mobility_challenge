@@ -4,7 +4,7 @@ import yaml
 
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
-from launch.actions import IncludeLaunchDescription
+from launch.actions import IncludeLaunchDescription, TimerAction
 from launch_ros.actions import Node
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 
@@ -190,6 +190,6 @@ def generate_launch_description():
         mission_zone,
         dynamic_obstacles,
         maze_navigator,
-        vlm_brain,
+        TimerAction(period=20.0, actions=[vlm_brain]),  # delay VLM brain 20s for sim to stabilize
     ])
 
