@@ -89,7 +89,7 @@ class ConfigStateMachine:
             dx = ss.x - getattr(self, 'sign_detect_x', ss.x)
             dy = ss.y - getattr(self, 'sign_detect_y', ss.y)
             dist_traveled = math.sqrt(dx*dx + dy*dy)
-            if approach_time > 3.0 or dist_traveled > 1.5:
+            if approach_time > 4.5 or dist_traveled > 2.25:
                 beh_name = getattr(self, 'pending_sign_behavior', None)
                 sign_dir = getattr(self, 'pending_sign_dir', '?')
                 if beh_name and beh_name in self.behaviors:
