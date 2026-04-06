@@ -88,13 +88,15 @@ behaviors:
     type: laser_gap_follow
     speed_profile: corridor
     params:
-      safety_distance_m: 0.4
+      safety_distance_m: 0.5
       min_gap_width_deg: 15
       forward_bias: 1.5
       kp_angular: 1.2
       lookahead_m: 1.5
-      slowdown_distance_m: 0.8
-      full_speed_distance_m: 2.0
+      repulse_distance_m: 0.8
+      repulse_gain: 1.0
+      slowdown_distance_m: 1.0
+      full_speed_distance_m: 2.5
     timeout_s: 999999.0
     completion: { method: continuous }
 

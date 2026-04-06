@@ -231,48 +231,66 @@ class LaserGapFollowBehavior(BaseBehavior):
                 best_score = score
                 best_gap = (gs, ge)
 
-        # Pure pursuit: pick the target point at the deepest range
-        # within the best gap, then steer toward it
+        # ── Pure pursuit toward deepest point in best gap ──
         gs, ge = best_gap
         gap_ranges = ranges[gs:ge+1].copy()
         gap_ranges[~np.isfinite(gap_ranges)] = 0.0
-        # Find the index within the gap with the deepest range
         best_local_idx = int(np.argmax(gap_ranges))
         target_idx = gs + best_local_idx
         target_angle = angle_min + target_idx * angle_inc
         target_range = float(gap_ranges[best_local_idx])
 
-        # Clamp target range to a lookahead distance
         lookahead = self.params.get('lookahead_m', 1.5)
         target_range = min(target_range, lookahead)
 
-        # Target point in robot frame (x=forward, y=left)
         tx = target_range * math.cos(target_angle)
         ty = target_range * math.sin(target_angle)
 
-        # Pure pursuit: curvature = 2 * ty / L^2, where L = distance to target
         L_sq = tx * tx + ty * ty
         if L_sq < 0.01:
             return self._clamp_twist(0.1, 0.0)
 
         curvature = 2.0 * ty / L_sq
-        angular = kp * curvature
+        attract_angular = kp * curvature
 
-        # Linear speed: scale by distance to nearest obstacle in forward cone
-        cone_half = max(1, n // 36)
+        # ── Repulsive steering: push away from nearby walls ──
+        repulse_dist = self.params.get('repulse_distance_m', 0.8)
+        repulse_gain = self.params.get('repulse_gain', 1.0)
+        repulse_angular = 0.0
+        for i in range(n):
+            r = ranges[i]
+            if np.isfinite(r) and 0.12 < r < repulse_dist:
+                ray_angle = angle_min + i * angle_inc
+                # Repulsive force is inverse proportional to distance
+                # and pushes AWAY from the obstacle (opposite direction)
+                force = (repulse_dist - r) / repulse_dist
+                repulse_angular -= force * math.sin(ray_angle) * repulse_gain
+
+        angular = attract_angular + repulse_angular
+
+        # ── Linear speed: scale by forward clearance ──
+        cone_half = max(1, n // 18)  # ~20 degree cone
         fwd_lo = max(0, forward_idx - cone_half)
         fwd_hi = min(n, forward_idx + cone_half + 1)
         fwd_ranges = ranges[fwd_lo:fwd_hi]
-        fwd_valid = fwd_ranges[np.isfinite(fwd_ranges) & (fwd_ranges > 0)]
+        fwd_valid = fwd_ranges[np.isfinite(fwd_ranges) & (fwd_ranges > 0.12)]
         forward_clear = float(np.min(fwd_valid)) if len(fwd_valid) > 0 else 0.0
 
-        if forward_clear < safety:
+        # Also check minimum range in a wider front arc for emergency slow
+        front_quarter = n // 4
+        front_lo = max(0, forward_idx - front_quarter)
+        front_hi = min(n, forward_idx + front_quarter)
+        front_ranges = ranges[front_lo:front_hi]
+        front_valid = front_ranges[np.isfinite(front_ranges) & (front_ranges > 0.12)]
+        min_front = float(np.min(front_valid)) if len(front_valid) > 0 else 0.0
+
+        if forward_clear < safety or min_front < safety * 0.7:
             linear = 0.0
         elif forward_clear < slowdown_dist:
-            linear = self.max_linear * 0.25
+            linear = self.max_linear * 0.2
         elif forward_clear < full_speed_dist:
             scale = (forward_clear - slowdown_dist) / (full_speed_dist - slowdown_dist)
-            linear = self.max_linear * (0.25 + 0.75 * scale)
+            linear = self.max_linear * (0.2 + 0.8 * scale)
         else:
             linear = self.max_linear
 
