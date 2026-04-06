@@ -24,6 +24,7 @@ from rclpy.executors import MultiThreadedExecutor
 from geometry_msgs.msg import Twist
 from nav_msgs.msg import Odometry
 from sensor_msgs.msg import Image
+from std_msgs.msg import String
 from cv_bridge import CvBridge
 from openai import OpenAI
 
@@ -57,9 +58,20 @@ class NavigationBrain(Node):
         self.bridge = CvBridge()
         self.create_subscription(Image, config.CAMERA_TOPIC, self._camera_cb, 1)
         self.create_subscription(Odometry, config.ODOM_TOPIC, self._odom_cb, 1)
+        # Tool data subscribers
+        self.create_subscription(String, '/mini_r1/sign_detections', self._sign_detect_cb, 10)
+        self.create_subscription(String, '/mini_r1/navigator/status', self._nav_status_cb, 10)
 
-        # --- Publisher ---
+        # --- Publishers ---
         self.cmd_pub = self.create_publisher(Twist, config.CMD_VEL_TOPIC, 1)
+        self.command_pub = self.create_publisher(String, '/vlm_brain/command', 10)
+        self.status_pub = self.create_publisher(String, '/vlm_brain/status', 10)
+
+        # --- Tool data ---
+        self._latest_sign = ""
+        self._sign_time = 0.0
+        self._sign_history = []
+        self._nav_status = ""
 
         # --- Thread-safe state ---
         self._lock = threading.Lock()
@@ -146,6 +158,44 @@ class NavigationBrain(Node):
             self._odom_x = msg.pose.pose.position.x
             self._odom_y = msg.pose.pose.position.y
             self._odom_theta = math.degrees(yaw)
+
+    def _sign_detect_cb(self, msg):
+        self._latest_sign = msg.data
+        self._sign_time = time.time()
+        self._sign_history.append({"direction": msg.data, "time": time.time()})
+        if len(self._sign_history) > 10:
+            self._sign_history = self._sign_history[-10:]
+
+    def _nav_status_cb(self, msg):
+        self._nav_status = msg.data
+
+    def _build_tool_context(self) -> str:
+        """Build tool/sensor context for the VLM prompt."""
+        lines = []
+
+        # Navigator status
+        if self._nav_status:
+            try:
+                nav = json.loads(self._nav_status)
+                lines.append(f"Navigator state: {nav.get('state', '?')}, behavior: {nav.get('behavior', '?')}")
+            except json.JSONDecodeError:
+                pass
+
+        # Sign detections
+        now = time.time()
+        recent_signs = [s for s in self._sign_history if now - s['time'] < 10.0]
+        if recent_signs:
+            sign_text = ", ".join(f"{s['direction']} ({now - s['time']:.0f}s ago)" for s in recent_signs[-3:])
+            lines.append(f"Detected signs: {sign_text}")
+        else:
+            lines.append("Detected signs: none nearby")
+
+        # Available behaviors
+        lines.append("")
+        lines.append("Available behaviors you can command: turn_left_90, turn_right_90, turn_180, stop, reverse, explore_random, move_forward, move_cautious")
+        lines.append("Available recoveries: dead_end_recovery, stuck_recovery, loop_recovery")
+
+        return "\n".join(lines)
 
     # ─── Frame + Odom Access ────────────────────────────────────────
 
@@ -257,18 +307,26 @@ class NavigationBrain(Node):
             f"  {i+1}. {obs}" for i, obs in enumerate(self.observations)
         ) or "  (none yet)"
 
-        # Build hybrid context
+        # Build tool context
+        tool_context = self._build_tool_context()
         sign_context = self._build_sign_context()
         vlmap_context = self._build_vlmap_context()
 
-        prompt = self.prompt_template.format(
-            objective=self.objective,
-            observations=obs_text,
-            x=x, y=y, theta=theta,
-            status=status,
-            sign_detections=sign_context or "  (sign detector off)",
-            spatial_memory=vlmap_context or "  (spatial map off)",
-        )
+        try:
+            prompt = self.prompt_template.format(
+                objective=self.objective,
+                observations=obs_text,
+                x=x, y=y, theta=theta,
+                status=status,
+                sign_detections=sign_context or "  (sign detector off)",
+                spatial_memory=vlmap_context or "  (spatial map off)",
+            )
+        except KeyError:
+            # Fallback if prompt template has different placeholders
+            prompt = self.prompt_template
+
+        # Append tool context
+        prompt += f"\n\nSensor & tool data:\n{tool_context}"
 
         # Try primary, then fallback: local → nvidia → openrouter
         providers = []
@@ -304,6 +362,7 @@ class NavigationBrain(Node):
                 )
 
                 raw = response.choices[0].message.content.strip()
+                self.get_logger().info(f"[{provider_name}] Raw VLM response: {raw[:200]}")
                 parsed = self._parse_vlm_response(raw)
                 if parsed:
                     self.api_call_count += 1
@@ -376,38 +435,52 @@ class NavigationBrain(Node):
     # ─── Command Execution ──────────────────────────────────────────
 
     def execute_command(self, cmd: dict):
-        """Convert VLM JSON to Twist and publish for duration."""
+        """Map VLM action to behavioral command for the navigator."""
         action = cmd.get("action", "stop")
-        speed = self._clamp(cmd.get("speed", 0.0), config.MIN_SPEED, config.MAX_SPEED)
-        turn_angle = self._clamp(
-            abs(cmd.get("turn_angle", 0.0)), config.MIN_TURN_ANGLE, config.MAX_TURN_ANGLE
-        )
+
+        # Map VLM actions to navigator behaviors
+        behavior_map = {
+            "forward": "move_forward",
+            "left": "turn_left_90",
+            "right": "turn_right_90",
+            "backward": "reverse",
+            "stop": "stop",
+        }
+
+        behavior_name = behavior_map.get(action, "move_forward")
+
+        # Publish behavioral command to navigator
+        nav_cmd = json.dumps({
+            "action": "execute_behavior",
+            "action_args": {"name": behavior_name},
+        })
+        cmd_msg = String()
+        cmd_msg.data = nav_cmd
+        self.command_pub.publish(cmd_msg)
+
+        # Also publish status for dashboard/RViz
+        status_msg = String()
+        status_msg.data = json.dumps({
+            "provider": self.current_provider,
+            "reasoning": cmd.get("reasoning", ""),
+            "observation": cmd.get("observation", ""),
+            "action": action,
+            "behavior": behavior_name,
+            "api_calls": self.api_call_count,
+        })
+        self.status_pub.publish(status_msg)
+
+        self.get_logger().info(
+            f"VLM [{self.current_provider}] action={action} → behavior={behavior_name} | "
+            f"reason: {cmd.get('reasoning', '')[:80]}")
+
+        # Wait for behavior to execute (shorter than raw Twist sleep)
         duration = self._clamp(
             cmd.get("duration", 1.0), config.MIN_DURATION, config.MAX_DURATION
         )
-
-        twist = Twist()
-
-        if action == "forward":
-            twist.linear.x = speed
-            twist.angular.z = cmd.get("turn_angle", 0.0)
-            twist.angular.z = self._clamp(twist.angular.z, -config.MAX_TURN_ANGLE, config.MAX_TURN_ANGLE)
-        elif action == "backward":
-            twist.linear.x = -speed
-        elif action == "left":
-            twist.angular.z = turn_angle
-        elif action == "right":
-            twist.angular.z = -turn_angle
-        # stop: twist is already zero
-
-        # Publish once (velocity persists)
-        self.cmd_pub.publish(twist)
-
-        # Sleep in chunks, checking pause flag
         elapsed = 0.0
         while elapsed < duration:
             if self.paused:
-                self._publish_stop()
                 return
             time.sleep(config.SLEEP_CHUNK)
             elapsed += config.SLEEP_CHUNK
