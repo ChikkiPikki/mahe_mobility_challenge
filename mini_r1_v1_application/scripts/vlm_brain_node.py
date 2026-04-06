@@ -571,10 +571,8 @@ def main():
     spin_thread = threading.Thread(target=executor.spin, daemon=True)
     spin_thread.start()
 
-    # If running standalone (no dashboard), set objective from args
-    if len(sys.argv) > 1:
-        objective = " ".join(sys.argv[1:])
-        brain.set_objective(objective)
+    # Auto-set objective for maze navigation (always active)
+    brain.set_objective("Navigate the maze: follow directional arrow signs, detect all 4 ArUco markers, avoid obstacles, and reach the goal zone.")
 
     try:
         brain.run_loop()
