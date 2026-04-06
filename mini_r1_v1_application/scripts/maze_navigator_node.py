@@ -97,7 +97,7 @@ class MazeNavigatorNode(Node):
 
     # ── Callbacks ────────────────────────────────────────────────────────
     def costmap_cb(self, msg: OccupancyGrid):
-        self.ss.costmap_data = np.array(msg.data, dtype=np.int8)
+        self.ss.costmap_data = np.array(msg.data, dtype=np.int16)  # int8 wraps >127
         self.ss.costmap_width = msg.info.width
         self.ss.costmap_height = msg.info.height
         self.ss.costmap_resolution = msg.info.resolution

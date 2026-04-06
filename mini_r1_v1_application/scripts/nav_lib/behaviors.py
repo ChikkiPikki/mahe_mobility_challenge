@@ -141,32 +141,41 @@ class GapFollowBehavior(BaseBehavior):
             return self._clamp_twist(0.0, 0.0)
 
         if ss.costmap_data is None:
-            return self._clamp_twist(0.2, 0.0)
+            # No costmap yet — drive forward slowly
+            return self._clamp_twist(0.3, 0.0)
 
         arc_half = math.radians(self.params.get('scan_arc_deg', 180) / 2.0)
         scan_min = self.params.get('scan_min_m', 0.3)
         scan_max = self.params.get('scan_max_m', 2.0)
         kp = self.params.get('kp_angular', 1.5)
         res = ss.costmap_resolution
+        if res <= 0:
+            return self._clamp_twist(0.3, 0.0)
 
         n_rays = 36
         angles = np.linspace(ss.yaw - arc_half, ss.yaw + arc_half, n_rays)
         free_dist = np.zeros(n_rays)
 
         for i, angle in enumerate(angles):
+            max_free = scan_min
             for d in np.arange(scan_min, scan_max, res * 2):
                 wx = ss.x + d * math.cos(angle)
                 wy = ss.y + d * math.sin(angle)
                 gx = int((wx - ss.costmap_origin_x) / res)
                 gy = int((wy - ss.costmap_origin_y) / res)
                 if 0 <= gx < ss.costmap_width and 0 <= gy < ss.costmap_height:
-                    if ss.costmap_data[gy * ss.costmap_width + gx] >= 65:
+                    cost = int(ss.costmap_data[gy * ss.costmap_width + gx])
+                    # -1 = unknown (treat as free), 0-64 = free, 65+ = occupied
+                    if cost >= 65:
                         break
+                    max_free = d
                 else:
-                    break
-                free_dist[i] = d
+                    # Out of costmap bounds — treat as free (unexplored)
+                    max_free = d
+            free_dist[i] = max_free
 
         # Find the widest contiguous gap
+        threshold = scan_min * 1.2
         best_start = 0
         best_len = 0
         cur_start = 0
@@ -174,8 +183,8 @@ class GapFollowBehavior(BaseBehavior):
         min_gap_rays = max(1, int(min_gap / (180.0 / n_rays)))
 
         for i in range(n_rays):
-            if free_dist[i] > scan_min * 1.5:
-                if i == 0 or free_dist[i-1] <= scan_min * 1.5:
+            if free_dist[i] > threshold:
+                if i == 0 or free_dist[i-1] <= threshold:
                     cur_start = i
                 gap_len = i - cur_start + 1
                 if gap_len > best_len:
@@ -183,8 +192,8 @@ class GapFollowBehavior(BaseBehavior):
                     best_len = gap_len
 
         if best_len < min_gap_rays:
-            # No gap found — slow down, slight turn
-            return self._clamp_twist(0.1, 0.3)
+            # No gap — rotate in place to search
+            return self._clamp_twist(0.0, 0.5)
 
         # Steer toward the center of the best gap
         center_idx = best_start + best_len // 2
@@ -196,7 +205,7 @@ class GapFollowBehavior(BaseBehavior):
         forward_idx = n_rays // 2
         forward_clear = free_dist[forward_idx] if forward_idx < n_rays else scan_min
         speed_scale = min(1.0, forward_clear / scan_max)
-        linear = self.max_linear * max(0.15, speed_scale)
+        linear = self.max_linear * max(0.2, speed_scale)
 
         return self._clamp_twist(linear, angular)
 
