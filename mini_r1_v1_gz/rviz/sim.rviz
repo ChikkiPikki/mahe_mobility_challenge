@@ -102,6 +102,20 @@ Visualization Manager:
         Reliability Policy: Reliable
         Value: /r1_mini/camera/image_raw
       Value: true
+    - Class: rviz_default_plugins/Image
+      Enabled: true
+      Max Value: 1
+      Median window: 5
+      Min Value: 0
+      Name: SignDetections
+      Normalize Range: true
+      Topic:
+        Depth: 5
+        Durability Policy: Volatile
+        History Policy: Keep Last
+        Reliability Policy: Reliable
+        Value: /mini_r1/sign_detections/image
+      Value: true
     - Alpha: 0.7
       Class: rviz_default_plugins/Map
       Color Scheme: costmap
@@ -130,6 +144,7 @@ Visualization Manager:
         aruco_text: true
         sign: true
         sign_text: true
+        sign_contour: true
         zone_start: true
         zone_start_text: true
         zone_goal: true

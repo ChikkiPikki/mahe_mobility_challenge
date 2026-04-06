@@ -9,15 +9,15 @@ marker_detector_node:
     aruco_marker_length: 0.4      # metres (side length of the printed marker)
     aruco_box_size: 0.4           # metres (side length of the Gazebo cube)
 
-    # ── Arrow / Sign Detection (blue-first) ──────
-    # HSV range for blue arrows (in OpenCV HSV: H 0-180, S 0-255, V 0-255)
-    # Source textures: H=110-120, S=51-255, V=188-255
-    # Tighter range to reject blue floor tiles
-    sign_blue_h_low: 105          # hue lower bound
-    sign_blue_h_high: 125         # hue upper bound
-    sign_blue_s_min: 140          # minimum saturation (high = vivid blue only)
-    sign_blue_v_min: 120          # minimum brightness
-    sign_min_blue_area: 800       # minimum blue contour area (px²)
+    # ── Sign Detection (MobileSAM) ───────────────
+    # Blue arrow HSV range (for filtering SAM masks)
+    sign_blue_h_low: 100
+    sign_blue_h_high: 130
+    sign_blue_s_min: 100
+    sign_blue_v_min: 80
+    sign_min_mask_area: 300       # minimum mask area (px²)
+    sign_blue_ratio_min: 0.35     # min fraction of mask pixels that must be blue
+    sign_curved_max_convexity: 0.65
 
-    # Curved arrow (rotate_180) detection
-    sign_curved_max_convexity: 0.65   # max area/hull_area ratio
+    # SAM processing interval (process every N-th frame)
+    sam_process_interval: 2

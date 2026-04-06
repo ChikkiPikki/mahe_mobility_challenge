@@ -103,7 +103,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 RUN pip3 install --no-cache-dir --break-system-packages \
     scipy \
     Pillow \
-    setuptools
+    setuptools \
+    ultralytics
 
 # ── Initialise rosdep ──────────────────────────────────────────────────
 RUN if [ ! -f /etc/ros/rosdep/sources.list.d/20-default.list ]; then \

@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """
 ArUco Marker & Sign Detector Node
-Subscribes to RGB-D camera, detects ArUco markers and directional arrow signs,
-computes 3D position, and publishes MarkerArray for RViz visualization +
-Mission Control Panel.
+Subscribes to RGB-D camera, detects ArUco markers and directional arrow signs
+(via MobileSAM), computes 3D position, and publishes MarkerArray for RViz
+visualization + Mission Control Panel.
 """
 import rclpy
 from rclpy.node import Node
@@ -19,6 +19,9 @@ import tf2_ros
 from tf2_ros import TransformException
 from scipy.spatial.transform import Rotation as ScipyRotation
 
+# MobileSAM via ultralytics
+from ultralytics import SAM
+
 
 class MarkerDetectorNode(Node):
     def __init__(self):
@@ -27,7 +30,6 @@ class MarkerDetectorNode(Node):
         self.bridge = CvBridge()
         self.aruco_dict = cv2.aruco.getPredefinedDictionary(cv2.aruco.DICT_4X4_50)
 
-        # Stricter detection parameters to reduce false positives
         self.aruco_params = cv2.aruco.DetectorParameters_create()
         self.aruco_params.adaptiveThreshConstant = 7
         self.aruco_params.minMarkerPerimeterRate = 0.03
@@ -39,12 +41,11 @@ class MarkerDetectorNode(Node):
         self.aruco_params.cornerRefinementWinSize = 5
         self.aruco_params.errorCorrectionRate = 0.6
 
-        # TF2 Setup
+        # TF2
         self.tf_buffer = tf2_ros.Buffer()
         self.tf_listener = tf2_ros.TransformListener(self.tf_buffer, self)
 
-        # ── Parameters from config YAML ──────────────────────────────────
-        # General
+        # ── Parameters ───────────────────────────────────────────────────
         self.spawn_x = self.declare_parameter('spawn_x', 0.0).value
         self.spawn_y = self.declare_parameter('spawn_y', 0.0).value
         self.get_logger().info(f"Spawn offset: ({self.spawn_x:.2f}, {self.spawn_y:.2f})")
@@ -54,19 +55,26 @@ class MarkerDetectorNode(Node):
         self.min_marker_area_px = int(self.declare_parameter('min_marker_area_px', 200).value)
         self.max_aruco_id = int(self.declare_parameter('max_aruco_id', 10).value)
 
-        # ArUco physical
         self.aruco_marker_length = self.declare_parameter('aruco_marker_length', 0.5).value
         self.aruco_box_size = self.declare_parameter('aruco_box_size', 0.5).value
 
-        # Sign detection — blue-first approach
+        # Sign detection params (for SAM mask filtering)
         self.sign_blue_h_low = int(self.declare_parameter('sign_blue_h_low', 100).value)
         self.sign_blue_h_high = int(self.declare_parameter('sign_blue_h_high', 130).value)
         self.sign_blue_s_min = int(self.declare_parameter('sign_blue_s_min', 100).value)
         self.sign_blue_v_min = int(self.declare_parameter('sign_blue_v_min', 80).value)
-        self.sign_min_blue_area = int(self.declare_parameter('sign_min_blue_area', 400).value)
+        self.sign_min_mask_area = int(self.declare_parameter('sign_min_mask_area', 300).value)
+        self.sign_blue_ratio_min = self.declare_parameter('sign_blue_ratio_min', 0.35).value
         self.sign_curved_max_convexity = self.declare_parameter('sign_curved_max_convexity', 0.65).value
 
-        # ── Message Filters Synchronizer ─────────────────────────────────
+        # ── MobileSAM ────────────────────────────────────────────────────
+        self.get_logger().info("Loading MobileSAM model...")
+        self.sam_model = SAM("mobile_sam.pt")
+        self.get_logger().info("MobileSAM loaded.")
+        self.frame_counter = 0
+        self.sam_process_interval = int(self.declare_parameter('sam_process_interval', 2).value)
+
+        # ── Subscribers ──────────────────────────────────────────────────
         self.sub_rgb = message_filters.Subscriber(
             self, Image, '/r1_mini/camera/image_raw', qos_profile=10)
         self.sub_depth = message_filters.Subscriber(
@@ -79,22 +87,24 @@ class MarkerDetectorNode(Node):
             queue_size=10, slop=0.5)
         self.ts.registerCallback(self.sync_callback)
 
-        # Publishers
+        # ── Publishers ───────────────────────────────────────────────────
         self.marker_pub = self.create_publisher(
             MarkerArray, '/mini_r1/mission_control/detected_objects', 10)
         self.viz_pub = self.create_publisher(
             MarkerArray, '/mini_r1/mission_control/viz_markers', 10)
         self.sign_detection_pub = self.create_publisher(
             String, '/mini_r1/sign_detections', 10)
-        # Locked markers (first-detection only)
+        self.annotated_img_pub = self.create_publisher(
+            Image, '/mini_r1/sign_detections/image', 10)
+
+        # Locked markers
         self.locked_panel_markers = {}
         self.locked_viz_markers = {}
-        # Signs use separate dicts keyed by "sign_<kind>_<counter>"
         self.locked_panel_signs = {}
         self.locked_viz_signs = {}
         self.sign_counter = 0
 
-        self.get_logger().info("MarkerDetectorNode initialized. Waiting for RGB-D streams...")
+        self.get_logger().info("MarkerDetectorNode initialized (MobileSAM). Waiting for RGB-D streams...")
 
     # ══════════════════════════════════════════════════════════════════════
     #  Sync callback
@@ -143,7 +153,18 @@ class MarkerDetectorNode(Node):
         panel_markers = MarkerArray()
         viz_markers = MarkerArray()
         self.detect_aruco(cv_gray, cv_depth, fx, fy, cx, cy, rot, t_vec, panel_markers, viz_markers)
-        self.detect_signs(cv_rgb, cv_depth, fx, fy, cx, cy, rot, t_vec, panel_markers, viz_markers)
+
+        # Run SAM every N frames to manage GPU load
+        self.frame_counter += 1
+        if self.frame_counter % self.sam_process_interval == 0:
+            self.detect_signs_sam(cv_rgb, cv_depth, fx, fy, cx, cy, rot, t_vec,
+                                 panel_markers, viz_markers)
+        else:
+            # Still republish locked signs
+            for pm in self.locked_panel_signs.values():
+                panel_markers.markers.append(pm)
+            for vm_list in self.locked_viz_signs.values():
+                viz_markers.markers.extend(vm_list)
 
         if panel_markers.markers:
             self.marker_pub.publish(panel_markers)
@@ -154,7 +175,6 @@ class MarkerDetectorNode(Node):
     #  Helpers
     # ══════════════════════════════════════════════════════════════════════
     def deproject_pixel(self, u, v, depth, fx, fy, cx, cy):
-        """Deproject pixel to 3D in camera LINK frame (X-fwd, Y-left, Z-up)."""
         opt_x = (u - cx) * depth / fx
         opt_y = (v - cy) * depth / fy
         opt_z = depth
@@ -178,7 +198,6 @@ class MarkerDetectorNode(Node):
         marker.pose.orientation.y = qy
         marker.pose.orientation.z = qz
         marker.pose.orientation.w = qw
-
         if mtype == Marker.CUBE:
             marker.scale.x = sx
             marker.scale.y = sy
@@ -186,7 +205,6 @@ class MarkerDetectorNode(Node):
         elif mtype == Marker.TEXT_VIEW_FACING:
             marker.scale.z = 0.2
             marker.text = text
-
         marker.color.a = 0.8
         marker.color.r = float(r)
         marker.color.g = float(g)
@@ -195,37 +213,26 @@ class MarkerDetectorNode(Node):
         return marker
 
     # ══════════════════════════════════════════════════════════════════════
-    #  ArUco Detection
+    #  ArUco Detection (unchanged)
     # ══════════════════════════════════════════════════════════════════════
     def detect_aruco(self, cv_gray, cv_depth, fx, fy, cx, cy, rot, t_vec, panel_markers, viz_markers):
         corners, ids, _ = cv2.aruco.detectMarkers(
             cv_gray, self.aruco_dict, parameters=self.aruco_params)
-
         if ids is None:
             return
 
         stamp = self.get_clock().now().to_msg()
-
-        camera_matrix = np.array([
-            [fx, 0, cx],
-            [0, fy, cy],
-            [0,  0,  1]
-        ], dtype=np.float64)
+        camera_matrix = np.array([[fx, 0, cx], [0, fy, cy], [0, 0, 1]], dtype=np.float64)
         dist_coeffs = np.zeros((4, 1))
-
         rvecs, tvecs, _ = cv2.aruco.estimatePoseSingleMarkers(
             corners, self.aruco_marker_length, camera_matrix, dist_coeffs)
-
         if rvecs is None or tvecs is None:
             return
 
         for i, marker_id_arr in enumerate(ids):
             marker_id = int(marker_id_arr[0])
-
             if marker_id < 0 or marker_id > self.max_aruco_id:
                 continue
-
-            # Lock to first detection
             if marker_id in self.locked_viz_markers:
                 continue
 
@@ -236,7 +243,6 @@ class MarkerDetectorNode(Node):
 
             center_u = int(c[:, 0].mean())
             center_v = int(c[:, 1].mean())
-
             h_depth, w_depth = cv_depth.shape[:2]
             if center_u < 0 or center_u >= w_depth or center_v < 0 or center_v >= h_depth:
                 continue
@@ -252,21 +258,13 @@ class MarkerDetectorNode(Node):
                 continue
 
             depth_m_real = float(np.median(valid_depths))
-
             rvec = rvecs[i][0]
             rmat, _ = cv2.Rodrigues(rvec)
-
-            R_opt2link = np.array([
-                [0,  0, 1],
-                [-1, 0, 0],
-                [0, -1, 0]
-            ], dtype=np.float64)
-
+            R_opt2link = np.array([[0, 0, 1], [-1, 0, 0], [0, -1, 0]], dtype=np.float64)
             p_cam_face = self.deproject_pixel(center_u, center_v, depth_m_real, fx, fy, cx, cy)
             R_marker2cam = R_opt2link @ rmat
             half_box = self.aruco_box_size / 2.0
             p_cam = p_cam_face + R_marker2cam @ np.array([0.0, 0.0, -half_box])
-
             p_odom = rot @ p_cam + t_vec
             R_marker2odom = rot @ R_marker2cam
             q = ScipyRotation.from_matrix(R_marker2odom).as_quat()
@@ -274,20 +272,17 @@ class MarkerDetectorNode(Node):
             world_x = float(p_odom[0]) + self.spawn_x
             world_y = float(p_odom[1]) + self.spawn_y
             world_z = float(p_odom[2])
-
             np.random.seed(marker_id)
             r, g, b = np.random.rand(3)
-
             bs = self.aruco_box_size
+
             new_panel = self._make_marker(marker_id, stamp, world_x, world_y, world_z, r, g, b,
                                           qx=q[0], qy=q[1], qz=q[2], qw=q[3], lifetime=5,
                                           sx=bs, sy=bs, sz=bs)
-
             new_viz = self._make_marker(marker_id, stamp,
                                         float(p_odom[0]), float(p_odom[1]), float(p_odom[2]),
                                         r, g, b, qx=q[0], qy=q[1], qz=q[2], qw=q[3], lifetime=0,
                                         sx=bs, sy=bs, sz=bs)
-
             new_text = self._make_marker(marker_id, stamp,
                                          float(p_odom[0]), float(p_odom[1]), float(p_odom[2]) + 0.40,
                                          1.0, 1.0, 1.0, qx=q[0], qy=q[1], qz=q[2], qw=q[3],
@@ -296,216 +291,305 @@ class MarkerDetectorNode(Node):
 
             self.locked_panel_markers[marker_id] = new_panel
             self.locked_viz_markers[marker_id] = [new_viz, new_text]
-
             self.get_logger().info(
                 f"ArUco#{marker_id} depth={depth_m_real:.2f}m "
                 f"LOCKED at world=({world_x:.2f},{world_y:.2f},{world_z:.2f})")
 
-        # Re-publish all locked markers every frame
         for pm in self.locked_panel_markers.values():
             panel_markers.markers.append(pm)
         for vm_list in self.locked_viz_markers.values():
             viz_markers.markers.extend(vm_list)
 
     # ══════════════════════════════════════════════════════════════════════
-    #  Arrow / Sign Detection  (blue-first approach)
+    #  MobileSAM Sign Detection
     # ══════════════════════════════════════════════════════════════════════
-    def _has_white_surround(self, hsv_img, contour, margin=15):
-        """Check if a blue contour is surrounded by white (the sign panel)."""
-        x, y, w, h = cv2.boundingRect(contour)
-        img_h, img_w = hsv_img.shape[:2]
-        # Expand bounding box by margin
-        x1 = max(0, x - margin)
-        y1 = max(0, y - margin)
-        x2 = min(img_w, x + w + margin)
-        y2 = min(img_h, y + h + margin)
+    def _is_blue_mask(self, hsv_img, mask):
+        """Check if >blue_ratio_min of mask pixels are blue."""
+        blue_lower = np.array([self.sign_blue_h_low, self.sign_blue_s_min, self.sign_blue_v_min])
+        blue_upper = np.array([self.sign_blue_h_high, 255, 255])
+        blue_in_hsv = cv2.inRange(hsv_img, blue_lower, blue_upper)
+        blue_pixels = np.count_nonzero(blue_in_hsv & mask)
+        mask_pixels = np.count_nonzero(mask)
+        if mask_pixels == 0:
+            return False
+        return (blue_pixels / mask_pixels) > self.sign_blue_ratio_min
 
+    def _has_white_surround(self, hsv_img, mask, margin=20):
+        """Check if area around mask has white pixels (the sign panel)."""
+        ys, xs = np.where(mask > 0)
+        if len(ys) == 0:
+            return False
+        x1 = max(0, int(xs.min()) - margin)
+        y1 = max(0, int(ys.min()) - margin)
+        x2 = min(hsv_img.shape[1], int(xs.max()) + margin)
+        y2 = min(hsv_img.shape[0], int(ys.max()) + margin)
         roi = hsv_img[y1:y2, x1:x2]
-        # White: low saturation, high value
         white_mask = cv2.inRange(roi, np.array([0, 0, 170]), np.array([180, 50, 255]))
         white_ratio = np.count_nonzero(white_mask) / (roi.shape[0] * roi.shape[1] + 1)
-        return white_ratio > 0.15  # at least 15% white surround
+        return white_ratio > 0.10
 
-    def _classify_arrow_direction(self, contour):
-        """Classify an arrow contour's direction in image space.
+    def _classify_direction_from_mask(self, mask):
+        """Classify arrow direction from a binary mask.
         Returns ('forward', 'left', 'right', 'rotate_180') or None.
         """
-        hull_pts = cv2.convexHull(contour, returnPoints=True)
+        contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
+        if not contours:
+            return None, None
+        cnt = max(contours, key=cv2.contourArea)
+        area = cv2.contourArea(cnt)
+        if area < self.sign_min_mask_area:
+            return None, None
+
+        # Convexity check for curved arrows
+        hull_pts = cv2.convexHull(cnt, returnPoints=True)
         hull_area = cv2.contourArea(hull_pts)
-        cnt_area = cv2.contourArea(contour)
-        convexity = cnt_area / hull_area if hull_area > 0 else 1.0
-
+        convexity = area / hull_area if hull_area > 0 else 1.0
         if convexity < self.sign_curved_max_convexity:
-            return 'rotate_180'
+            return 'rotate_180', cnt
 
-        M = cv2.moments(contour)
+        # Straight arrows: centroid-to-tip
+        M = cv2.moments(cnt)
         if M["m00"] == 0:
-            return None
-        cx = M["m10"] / M["m00"]
-        cy = M["m01"] / M["m00"]
+            return None, None
+        cx_m = M["m10"] / M["m00"]
+        cy_m = M["m01"] / M["m00"]
 
-        hull_pts_sq = hull_pts.squeeze()
-        if hull_pts_sq.ndim != 2:
-            return None
-        dists = np.sqrt((hull_pts_sq[:, 0] - cx)**2 + (hull_pts_sq[:, 1] - cy)**2)
-        tip_idx = np.argmax(dists)
-        tip = hull_pts_sq[tip_idx]
+        hull_sq = hull_pts.squeeze()
+        if hull_sq.ndim != 2:
+            return None, None
+        dists = np.sqrt((hull_sq[:, 0] - cx_m)**2 + (hull_sq[:, 1] - cy_m)**2)
+        tip = hull_sq[np.argmax(dists)]
 
-        dx = tip[0] - cx
-        dy = tip[1] - cy
-        length = np.sqrt(dx*dx + dy*dy)
-        if length < 5:
-            return None
+        dx = tip[0] - cx_m
+        dy = tip[1] - cy_m
+        if np.sqrt(dx*dx + dy*dy) < 5:
+            return None, None
 
-        angle_deg = np.degrees(np.arctan2(dy, dx))
-
-        if -135 < angle_deg <= -45:
-            return 'forward'
-        elif -45 < angle_deg <= 45:
-            return 'right'
-        elif 45 < angle_deg <= 135:
-            return None  # pointing down = seeing sign from behind
+        angle = np.degrees(np.arctan2(dy, dx))
+        if -135 < angle <= -45:
+            return 'forward', cnt
+        elif -45 < angle <= 45:
+            return 'right', cnt
+        elif 45 < angle <= 135:
+            return None, None  # pointing down = back of sign
         else:
-            return 'left'
+            return 'left', cnt
 
-    def detect_signs(self, cv_rgb, cv_depth, fx, fy, cx, cy, rot, t_vec, panel_markers, viz_markers):
-        """Detect arrow signs by finding blue regions on white panels."""
-
-        stamp = self.get_clock().now().to_msg()
+    def detect_signs_sam(self, cv_rgb, cv_depth, fx, fy, cx, cy, rot, t_vec,
+                         panel_markers, viz_markers):
+        """Detect arrow signs using MobileSAM segment-everything."""
+        h_img, w_img = cv_rgb.shape[:2]
         h_depth, w_depth = cv_depth.shape[:2]
+        stamp = self.get_clock().now().to_msg()
 
-        # ── Step 1: Find blue regions in HSV ──
+        # Convert RGB to BGR for SAM (ultralytics expects BGR)
+        cv_bgr = cv2.cvtColor(cv_rgb, cv2.COLOR_RGB2BGR)
         hsv = cv2.cvtColor(cv_rgb, cv2.COLOR_RGB2HSV)
-        lower = np.array([self.sign_blue_h_low, self.sign_blue_s_min, self.sign_blue_v_min])
-        upper = np.array([self.sign_blue_h_high, 255, 255])
-        blue_mask = cv2.inRange(hsv, lower, upper)
 
-        k = np.ones((5, 5), np.uint8)
-        blue_mask = cv2.morphologyEx(blue_mask, cv2.MORPH_CLOSE, k, iterations=2)
-        blue_mask = cv2.morphologyEx(blue_mask, cv2.MORPH_OPEN, k, iterations=1)
+        # Run MobileSAM segment everything
+        try:
+            results = self.sam_model(cv_bgr, verbose=False)
+        except Exception as e:
+            self.get_logger().error(f"SAM inference error: {e}", throttle_duration_sec=5.0)
+            return
 
-        # ── Step 2: Find contours ──
-        contours, _ = cv2.findContours(blue_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
+        # Annotated image for RViz
+        annotated = cv_bgr.copy()
 
-        for cnt in contours:
-            area = cv2.contourArea(cnt)
-            if area < self.sign_min_blue_area:
-                continue
+        if results and results[0].masks is not None:
+            masks_data = results[0].masks.data.cpu().numpy()
 
-            # ── Step 3: Validate — blue must be on a white sign panel ──
-            if not self._has_white_surround(hsv, cnt):
-                continue
+            for idx in range(masks_data.shape[0]):
+                raw_mask = masks_data[idx]
+                # Resize mask to image dimensions if needed
+                if raw_mask.shape[:2] != (h_img, w_img):
+                    mask = cv2.resize(raw_mask, (w_img, h_img),
+                                      interpolation=cv2.INTER_NEAREST)
+                else:
+                    mask = raw_mask
+                mask_u8 = (mask > 0.5).astype(np.uint8) * 255
 
-            # ── Step 4: Shape validation — reject floor tiles / large blobs ──
-            x, y, w, h = cv2.boundingRect(cnt)
-            bbox_area = w * h
-            # Arrow should fill 20-85% of its bbox (not a solid rectangle)
-            fill_ratio = area / bbox_area if bbox_area > 0 else 0
-            if fill_ratio > 0.85 or fill_ratio < 0.15:
-                continue
-            # Reject very large blobs (floor tiles) — sign is small in the image
-            if bbox_area > (h_depth * w_depth * 0.15):
-                continue
+                mask_area = np.count_nonzero(mask_u8)
+                if mask_area < self.sign_min_mask_area:
+                    continue
+                # Reject very large masks (floor, walls)
+                if mask_area > (h_img * w_img * 0.1):
+                    continue
 
-            # ── Step 5: Classify arrow direction ──
-            direction = self._classify_arrow_direction(cnt)
-            if direction is None:
-                continue
+                # Filter: must be blue
+                if not self._is_blue_mask(hsv, mask_u8):
+                    continue
 
-            # ── Step 4: Get centroid and depth ──
-            M = cv2.moments(cnt)
-            if M["m00"] == 0:
-                continue
-            centroid_u = int(M["m10"] / M["m00"])
-            centroid_v = int(M["m01"] / M["m00"])
+                # Filter: must have white surround (sign panel)
+                if not self._has_white_surround(hsv, mask_u8):
+                    continue
 
-            if centroid_u < 0 or centroid_u >= w_depth or centroid_v < 0 or centroid_v >= h_depth:
-                continue
+                # Classify direction
+                direction, cnt = self._classify_direction_from_mask(mask_u8)
+                if direction is None or cnt is None:
+                    continue
 
-            patch_r = 5
-            u_lo = max(0, centroid_u - patch_r)
-            u_hi = min(w_depth, centroid_u + patch_r + 1)
-            v_lo = max(0, centroid_v - patch_r)
-            v_hi = min(h_depth, centroid_v + patch_r + 1)
-            depth_patch = cv_depth[v_lo:v_hi, u_lo:u_hi].astype(np.float64)
-            valid = depth_patch[(depth_patch > self.min_depth) &
-                                (depth_patch < self.max_depth) &
-                                np.isfinite(depth_patch)]
-            if len(valid) == 0:
-                continue
+                # Get centroid
+                M = cv2.moments(cnt)
+                if M["m00"] == 0:
+                    continue
+                centroid_u = int(M["m10"] / M["m00"])
+                centroid_v = int(M["m01"] / M["m00"])
 
-            depth_m = float(np.median(valid))
+                if centroid_u < 0 or centroid_u >= w_depth or centroid_v < 0 or centroid_v >= h_depth:
+                    continue
 
-            # ── Step 5: 3D projection ──
-            p_cam = self.deproject_pixel(centroid_u, centroid_v, depth_m, fx, fy, cx, cy)
-            p_odom = rot @ p_cam + t_vec
+                # Depth at centroid
+                patch_r = 5
+                u_lo = max(0, centroid_u - patch_r)
+                u_hi = min(w_depth, centroid_u + patch_r + 1)
+                v_lo = max(0, centroid_v - patch_r)
+                v_hi = min(h_depth, centroid_v + patch_r + 1)
+                depth_patch = cv_depth[v_lo:v_hi, u_lo:u_hi].astype(np.float64)
+                valid = depth_patch[(depth_patch > self.min_depth) &
+                                    (depth_patch < self.max_depth) &
+                                    np.isfinite(depth_patch)]
+                if len(valid) == 0:
+                    continue
+                depth_m = float(np.median(valid))
 
-            # ── Step 6: Check if already locked nearby ──
-            already_locked = False
-            world_x = float(p_odom[0]) + self.spawn_x
-            world_y = float(p_odom[1]) + self.spawn_y
-            world_z = float(p_odom[2])
-            for key in self.locked_panel_signs:
-                pm = self.locked_panel_signs[key]
-                dx = pm.pose.position.x - world_x
-                dy = pm.pose.position.y - world_y
-                if (dx*dx + dy*dy) < 1.0:
-                    already_locked = True
-                    break
-            if already_locked:
-                continue
+                # 3D projection
+                p_cam = self.deproject_pixel(centroid_u, centroid_v, depth_m, fx, fy, cx, cy)
+                p_odom = rot @ p_cam + t_vec
 
-            # ── Step 7: Create markers and publish ──
-            self.sign_counter += 1
-            sign_id = self.sign_counter
+                world_x = float(p_odom[0]) + self.spawn_x
+                world_y = float(p_odom[1]) + self.spawn_y
+                world_z = float(p_odom[2])
 
-            # Color by direction
-            color_map = {
-                'forward': (0.0, 1.0, 0.0),
-                'left':    (1.0, 1.0, 0.0),
-                'right':   (0.0, 1.0, 1.0),
-                'rotate_180': (1.0, 0.0, 1.0),
-            }
-            cr, cg, cb = color_map.get(direction, (1.0, 1.0, 1.0))
+                # Dedup: skip if within 1m AND same direction type
+                already_locked = False
+                for key in self.locked_panel_signs:
+                    pm = self.locked_panel_signs[key]
+                    ddx = pm.pose.position.x - world_x
+                    ddy = pm.pose.position.y - world_y
+                    if (ddx*ddx + ddy*ddy) < 1.0:
+                        # Check if same direction (stored in text of corresponding text marker)
+                        for vm in self.locked_viz_signs.get(key, []):
+                            if vm.type == Marker.TEXT_VIEW_FACING and direction in vm.text:
+                                already_locked = True
+                                break
+                        if already_locked:
+                            break
+                if already_locked:
+                    continue
 
-            # Text label in RViz
-            text_marker = self._make_marker(
-                sign_id, stamp,
-                float(p_odom[0]), float(p_odom[1]), float(p_odom[2]) + 0.25,
-                1.0, 1.0, 1.0, lifetime=0,
-                mtype=Marker.TEXT_VIEW_FACING,
-                text=f"Sign: {direction}", ns="sign_text")
+                # ── Create markers ──
+                self.sign_counter += 1
+                sign_id = self.sign_counter
 
-            # Cube marker in RViz
-            viz_cube = self._make_marker(
-                sign_id, stamp,
-                float(p_odom[0]), float(p_odom[1]), float(p_odom[2]),
-                cr, cg, cb, lifetime=0, ns="sign",
-                sx=0.3, sy=0.3, sz=0.3)
+                color_map = {
+                    'forward':    (0.0, 1.0, 0.0),
+                    'left':       (1.0, 1.0, 0.0),
+                    'right':      (0.0, 1.0, 1.0),
+                    'rotate_180': (1.0, 0.0, 1.0),
+                }
+                cr, cg, cb = color_map.get(direction, (1.0, 1.0, 1.0))
 
-            # Panel marker for mission control (world coords)
-            panel_m = self._make_marker(
-                sign_id, stamp, world_x, world_y, world_z,
-                cr, cg, cb, lifetime=5, ns="sign",
-                sx=0.3, sy=0.3, sz=0.3)
+                # 3D contour LINE_STRIP from mask
+                cnt_pts = cnt[:, 0, :]
+                n_pts = len(cnt_pts)
+                step = max(1, n_pts // 60)
+                sampled = list(range(0, n_pts, step))
+                if sampled[-1] != 0:
+                    sampled.append(0)
 
-            self.locked_panel_signs[sign_id] = panel_m
-            self.locked_viz_signs[sign_id] = [viz_cube, text_marker]
+                odom_3d = []
+                for si in sampled:
+                    su, sv = int(cnt_pts[si][0]), int(cnt_pts[si][1])
+                    if 0 <= su < w_depth and 0 <= sv < h_depth:
+                        d = float(cv_depth[sv, su])
+                        if d < self.min_depth or d > self.max_depth or not np.isfinite(d):
+                            d = depth_m
+                        p3 = self.deproject_pixel(su, sv, d, fx, fy, cx, cy)
+                        odom_3d.append(rot @ p3 + t_vec)
 
-            # Publish direction for navigator
-            msg = String()
-            msg.data = direction
-            self.sign_detection_pub.publish(msg)
+                if len(odom_3d) < 5:
+                    continue
 
-            self.get_logger().info(
-                f"Sign[{direction}] #{sign_id} depth={depth_m:.2f}m "
-                f"LOCKED at world=({world_x:.2f},{world_y:.2f},{world_z:.2f})")
+                # LINE_STRIP marker (3D arrow shape)
+                contour_marker = Marker()
+                contour_marker.header.frame_id = "odom"
+                contour_marker.header.stamp = stamp
+                contour_marker.ns = "sign_contour"
+                contour_marker.id = sign_id
+                contour_marker.type = Marker.LINE_STRIP
+                contour_marker.action = Marker.ADD
+                contour_marker.scale.x = 0.008
+                contour_marker.color.r = float(cr)
+                contour_marker.color.g = float(cg)
+                contour_marker.color.b = float(cb)
+                contour_marker.color.a = 1.0
+                contour_marker.lifetime.sec = 0
+                for p3d in odom_3d:
+                    pt = Point()
+                    pt.x = float(p3d[0])
+                    pt.y = float(p3d[1])
+                    pt.z = float(p3d[2])
+                    contour_marker.points.append(pt)
 
-        # Re-publish all locked signs every frame
+                # Text label
+                text_marker = self._make_marker(
+                    sign_id, stamp,
+                    float(p_odom[0]), float(p_odom[1]), float(p_odom[2]) + 0.25,
+                    1.0, 1.0, 1.0, lifetime=0,
+                    mtype=Marker.TEXT_VIEW_FACING,
+                    text=f"Sign: {direction}", ns="sign_text")
+
+                # Cube marker at sign position
+                viz_cube = self._make_marker(
+                    sign_id, stamp,
+                    float(p_odom[0]), float(p_odom[1]), float(p_odom[2]),
+                    cr, cg, cb, lifetime=0, ns="sign",
+                    sx=0.3, sy=0.3, sz=0.3)
+
+                # Panel marker for mission control (world coords)
+                panel_m = self._make_marker(
+                    sign_id, stamp, world_x, world_y, world_z,
+                    cr, cg, cb, lifetime=5, ns="sign",
+                    sx=0.3, sy=0.3, sz=0.3)
+
+                self.locked_panel_signs[sign_id] = panel_m
+                self.locked_viz_signs[sign_id] = [contour_marker, viz_cube, text_marker]
+
+                # Publish direction
+                msg = String()
+                msg.data = direction
+                self.sign_detection_pub.publish(msg)
+
+                self.get_logger().info(
+                    f"Sign[{direction}] #{sign_id} depth={depth_m:.2f}m "
+                    f"LOCKED at world=({world_x:.2f},{world_y:.2f},{world_z:.2f})")
+
+                # Draw on annotated image
+                color_bgr = (int(cb*255), int(cg*255), int(cr*255))
+                overlay = annotated.copy()
+                overlay[mask_u8 > 0] = color_bgr
+                cv2.addWeighted(overlay, 0.4, annotated, 0.6, 0, annotated)
+                cv2.drawContours(annotated, [cnt], -1, color_bgr, 2)
+                bx, by, bw, bh = cv2.boundingRect(cnt)
+                cv2.putText(annotated, direction, (bx, by - 5),
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.6, color_bgr, 2)
+
+        # Republish all locked signs
         for pm in self.locked_panel_signs.values():
             panel_markers.markers.append(pm)
         for vm_list in self.locked_viz_signs.values():
             viz_markers.markers.extend(vm_list)
+
+        # Publish annotated image
+        try:
+            ann_msg = self.bridge.cv2_to_imgmsg(annotated, encoding="bgr8")
+            ann_msg.header.stamp = stamp
+            self.annotated_img_pub.publish(ann_msg)
+        except Exception as e:
+            self.get_logger().error(f"Annotated image publish error: {e}",
+                                   throttle_duration_sec=5.0)
+
 
 def main(args=None):
     rclpy.init(args=args)
