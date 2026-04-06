@@ -30,7 +30,10 @@ class MarkerDetectorNode(Node):
         self.bridge = CvBridge()
         self.aruco_dict = cv2.aruco.getPredefinedDictionary(cv2.aruco.DICT_4X4_50)
 
-        self.aruco_params = cv2.aruco.DetectorParameters_create()
+        try:
+            self.aruco_params = cv2.aruco.DetectorParameters_create()
+        except AttributeError:
+            self.aruco_params = cv2.aruco.DetectorParameters()
         self.aruco_params.adaptiveThreshConstant = 7
         self.aruco_params.minMarkerPerimeterRate = 0.03
         self.aruco_params.maxMarkerPerimeterRate = 4.0
