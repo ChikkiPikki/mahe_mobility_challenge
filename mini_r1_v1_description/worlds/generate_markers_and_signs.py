@@ -25,12 +25,12 @@ from PIL import Image, ImageOps
 ARUCO_DICT = cv2.aruco.DICT_4X4_50
 ARUCO_IMG_PX = 512            # generated marker image resolution
 ARUCO_BOX_SIZE = 0.4          # metres
-ARUCO_BOX_COLOR = "0.9 0.6 0.1 1"  # distinct orange-amber colour
+ARUCO_BOX_COLOR = "0.8 0.8 0.2 1"  # yellow-green (avoids orange filter)
 
 ZONE_RADIUS = 1.0             # metres
 ZONE_HEIGHT = 2.0             # metres
 ZONE_TRANSPARENCY = 0.4
-ZONE_START_COLOR = "1.0 0.5 0.0 1.0"
+ZONE_START_COLOR = "0.9 0.1 0.1 1.0"
 ZONE_GOAL_COLOR = "0.0 1.0 1.0 1.0"
 
 SIGN_PANEL_W = 0.45           # metres

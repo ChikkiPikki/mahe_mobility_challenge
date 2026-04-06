@@ -96,13 +96,13 @@ class MissionZoneNode(Node):
         stamp = self.get_clock().now().to_msg()
         viz = MarkerArray()
 
-        # Start zone (orange)
+        # Start zone (red)
         viz.markers.append(self._make_cylinder(
             0, self.start_odom_x, self.start_odom_y,
-            1.0, 0.5, 0.0, "zone_start", stamp))
+            0.9, 0.1, 0.1, "zone_start", stamp))
         viz.markers.append(self._make_label(
             self.start_odom_x, self.start_odom_y,
-            "START", 1.0, 0.5, 0.0, "zone_start_text", stamp))
+            "START", 0.9, 0.1, 0.1, "zone_start_text", stamp))
 
         # Goal zone (cyan)
         viz.markers.append(self._make_cylinder(

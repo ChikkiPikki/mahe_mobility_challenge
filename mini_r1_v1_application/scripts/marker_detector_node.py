@@ -453,8 +453,11 @@ class MarkerDetectorNode(Node):
                 n_orange += 1
                 n_white += 1  # skip white surround check — orange is unique enough
 
-                # Classify direction
-                direction, cnt = self._classify_direction_from_mask(mask_u8)
+                # Extract ONLY orange pixels within this SAM mask, classify from that shape
+                lower = np.array([self.sign_arrow_h_low, self.sign_arrow_s_min, self.sign_arrow_v_min])
+                upper = np.array([self.sign_arrow_h_high, 255, 255])
+                orange_in_mask = cv2.inRange(hsv, lower, upper) & mask_u8
+                direction, cnt = self._classify_direction_from_mask(orange_in_mask)
                 if direction is None or cnt is None:
                     continue
                 n_classified += 1
