@@ -425,13 +425,14 @@ class MarkerDetectorNode(Node):
 
         # Annotated image for RViz
         annotated = cv_bgr.copy()
+        n_total = 0
+        n_orange = 0
+        n_white = 0
+        n_classified = 0
 
         if results and results[0].masks is not None:
             masks_data = results[0].masks.data.cpu().numpy()
             n_total = masks_data.shape[0]
-            n_orange = 0
-            n_white = 0
-            n_classified = 0
 
             for idx in range(n_total):
                 raw_mask = masks_data[idx].astype(np.uint8)
