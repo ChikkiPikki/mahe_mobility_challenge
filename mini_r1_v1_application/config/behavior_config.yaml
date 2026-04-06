@@ -92,6 +92,7 @@ behaviors:
       min_gap_width_deg: 15
       forward_bias: 1.5
       kp_angular: 1.2
+      lookahead_m: 1.5
       slowdown_distance_m: 0.8
       full_speed_distance_m: 2.0
     timeout_s: 999999.0

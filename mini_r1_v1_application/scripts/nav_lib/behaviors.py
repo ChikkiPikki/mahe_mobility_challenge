@@ -228,15 +228,35 @@ class LaserGapFollowBehavior(BaseBehavior):
                 best_score = score
                 best_gap = (gs, ge)
 
-        # Steer toward the center of the best gap
-        gap_center_idx = (best_gap[0] + best_gap[1]) // 2
-        gap_center_angle = angle_min + gap_center_idx * angle_inc
-        angle_error = normalize_angle(gap_center_angle)  # target relative to robot front (0)
-        angular = kp * angle_error
+        # Pure pursuit: pick the target point at the deepest range
+        # within the best gap, then steer toward it
+        gs, ge = best_gap
+        gap_ranges = ranges[gs:ge+1].copy()
+        gap_ranges[~np.isfinite(gap_ranges)] = 0.0
+        # Find the index within the gap with the deepest range
+        best_local_idx = int(np.argmax(gap_ranges))
+        target_idx = gs + best_local_idx
+        target_angle = angle_min + target_idx * angle_inc
+        target_range = float(gap_ranges[best_local_idx])
 
-        # Linear speed: scale by forward clearance
-        # Sample a small forward cone for clearance
-        cone_half = max(1, n // 36)  # ~10 degree cone
+        # Clamp target range to a lookahead distance
+        lookahead = self.params.get('lookahead_m', 1.5)
+        target_range = min(target_range, lookahead)
+
+        # Target point in robot frame (x=forward, y=left)
+        tx = target_range * math.cos(target_angle)
+        ty = target_range * math.sin(target_angle)
+
+        # Pure pursuit: curvature = 2 * ty / L^2, where L = distance to target
+        L_sq = tx * tx + ty * ty
+        if L_sq < 0.01:
+            return self._clamp_twist(0.1, 0.0)
+
+        curvature = 2.0 * ty / L_sq
+        angular = kp * curvature
+
+        # Linear speed: scale by distance to nearest obstacle in forward cone
+        cone_half = max(1, n // 36)
         fwd_lo = max(0, forward_idx - cone_half)
         fwd_hi = min(n, forward_idx + cone_half + 1)
         fwd_ranges = ranges[fwd_lo:fwd_hi]
