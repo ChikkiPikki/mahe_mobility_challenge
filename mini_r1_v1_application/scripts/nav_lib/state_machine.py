@@ -1,5 +1,6 @@
 """Config-driven state machine for maze navigation."""
 import json
+import math
 import time
 from geometry_msgs.msg import Twist
 from .sensor_state import SensorState
@@ -24,6 +25,12 @@ class ConfigStateMachine:
         self.active_recovery = None       # name of current recovery strategy
         self.recovery_step_idx = 0
         self.recovery_step_behavior = None
+
+        # Sign approach tracking
+        self.pending_sign_dir = None
+        self.pending_sign_behavior = None
+        self.sign_detect_x = 0.0
+        self.sign_detect_y = 0.0
 
         # Stats
         self.signs_seen = 0
@@ -75,6 +82,28 @@ class ConfigStateMachine:
                     self._handle_detector_transition(det_name, det, trans, ss)
                     break
 
+        # SIGN_APPROACH: keep driving until we've moved close to sign area
+        if self.current_state == 'SIGN_APPROACH':
+            approach_time = now - self.state_enter_time
+            # After 3 seconds of approach (or 1.5m traveled), execute the turn
+            dx = ss.x - getattr(self, 'sign_detect_x', ss.x)
+            dy = ss.y - getattr(self, 'sign_detect_y', ss.y)
+            dist_traveled = math.sqrt(dx*dx + dy*dy)
+            if approach_time > 3.0 or dist_traveled > 1.5:
+                beh_name = getattr(self, 'pending_sign_behavior', None)
+                sign_dir = getattr(self, 'pending_sign_dir', '?')
+                if beh_name and beh_name in self.behaviors:
+                    self.current_state = 'EXECUTING_SIGN'
+                    self.state_enter_time = now
+                    self.current_behavior = self.behaviors[beh_name]
+                    self.current_behavior.reset()
+                    self.current_behavior.start(ss)
+                    self.reasoning = f"Reached sign area, turning {sign_dir}."
+                    self.logger.info(f"State: SIGN_APPROACH → EXECUTING_SIGN ({sign_dir})")
+                else:
+                    self.current_state = 'EXPLORING'
+                    self.state_enter_time = now
+
         # Execute current behavior
         if self.current_state == 'RECOVERING' and self.recovery_step_behavior:
             twist = self.recovery_step_behavior.tick(ss)
@@ -113,19 +142,23 @@ class ConfigStateMachine:
         if det_name == 'sign_visible':
             sign_dir = det.get_value()
             self.signs_seen += 1
-            behavior_name = self.sign_dispatch.get(sign_dir)
-            if behavior_name and behavior_name in self.behaviors:
-                self.current_state = trans.get('next', 'EXECUTING_SIGN')
-                self.state_enter_time = ss.now()
-                self.current_behavior = self.behaviors[behavior_name]
+            self.pending_sign_dir = sign_dir
+            self.pending_sign_behavior = self.sign_dispatch.get(sign_dir)
+            # Record where the sign was detected from
+            self.sign_detect_x = ss.x
+            self.sign_detect_y = ss.y
+
+            # Go to SIGN_APPROACH — keep driving forward until close
+            self.current_state = 'SIGN_APPROACH'
+            self.state_enter_time = ss.now()
+            # Use gap_follow to keep navigating toward the sign
+            if 'gap_follow' in self.behaviors:
+                self.current_behavior = self.behaviors['gap_follow']
                 self.current_behavior.reset()
                 self.current_behavior.start(ss)
-                self.reasoning = f"Sign '{sign_dir}' detected, executing {behavior_name}."
-                self.logger.info(
-                    f"State: EXPLORING → EXECUTING_SIGN (sign={sign_dir}, "
-                    f"behavior={behavior_name})")
-                # Consume the sign so it doesn't re-trigger
-                ss.last_sign = ""
+            self.reasoning = f"Sign '{sign_dir}' spotted — approaching before turning."
+            self.logger.info(f"State: EXPLORING → SIGN_APPROACH (sign={sign_dir})")
+            ss.last_sign = ""
             return
 
         if det_name == 'goal_reached':

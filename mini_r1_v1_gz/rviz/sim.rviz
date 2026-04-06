@@ -1,6 +1,4 @@
 Panels:
-  - Class: mini_r1_v1_gz/TeleopPanel
-    Name: TeleopPanel
   - Class: mini_r1_v1_application/MissionControlPanel
     Name: MissionControlPanel
   - Class: mini_r1_v1_application/NavigatorStatusPanel

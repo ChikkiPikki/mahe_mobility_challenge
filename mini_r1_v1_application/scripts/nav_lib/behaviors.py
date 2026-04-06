@@ -199,14 +199,28 @@ class GapFollowBehavior(BaseBehavior):
             # No gap — rotate in place to search
             return self._clamp_twist(0.0, 0.5)
 
-        # Steer toward the center of the best gap
+        # Weight gaps toward the forward direction (center of arc)
+        # Among gaps of similar width, prefer the one closest to forward
         center_idx = best_start + best_len // 2
+
+        # Check if there's a gap containing the forward direction that's
+        # at least 60% as wide as the best gap — prefer it
+        forward_idx = n_rays // 2
+        for i in range(n_rays):
+            if free_dist[i] > threshold:
+                if i == 0 or free_dist[i-1] <= threshold:
+                    gs = i
+                gl = i - gs + 1
+                # This gap contains or is near the forward direction
+                if gs <= forward_idx <= gs + gl and gl >= best_len * 0.6:
+                    center_idx = gs + gl // 2
+                    break
+
         target_angle = angles[center_idx]
         angle_error = normalize_angle(target_angle - ss.yaw)
         angular = kp * angle_error
 
         # Scale linear speed by forward clearance
-        forward_idx = n_rays // 2
         forward_clear = free_dist[forward_idx] if forward_idx < n_rays else scan_min
         speed_scale = min(1.0, forward_clear / scan_max)
         linear = self.max_linear * max(0.2, speed_scale)
